@@ -1,8 +1,8 @@
 Flask==3.0.0
-Flask-CORS==4.0.0
+Flask-CORS==4.0.2
 click==8.1.7
 Authlib==1.7.2
 gunicorn==23.0.0
 prometheus-client==0.25.0
 requests==2.31.0
-Werkzeug==3.0.1
+Werkzeug==3.0.6
