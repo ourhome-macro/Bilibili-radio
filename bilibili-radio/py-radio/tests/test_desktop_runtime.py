@@ -27,6 +27,36 @@ class DesktopDataDirTests(unittest.TestCase):
         )
 
 
+class DesktopDownloadsDirTests(unittest.TestCase):
+    def test_explicit_downloads_dir_wins(self):
+        import app as app_module
+
+        configured = r"D:\RadioDownloads"
+        with patch.dict(os.environ, {"DOWNLOADS_DIR": configured}, clear=False):
+            self.assertEqual(app_module._downloads_dir(), Path(configured))
+
+    def test_windows_known_downloads_dir_wins_over_userprofile(self):
+        import app as app_module
+
+        known_downloads = Path(r"D:\SystemDownloads")
+        with (
+            patch.dict(os.environ, {"DOWNLOADS_DIR": "", "USERPROFILE": r"C:\Users\listener"}, clear=False),
+            patch.object(app_module.os, "name", "nt"),
+            patch.object(app_module, "_windows_known_downloads_dir", return_value=known_downloads),
+        ):
+            self.assertEqual(app_module._downloads_dir(), known_downloads)
+
+    def test_windows_downloads_dir_falls_back_to_userprofile(self):
+        import app as app_module
+
+        with (
+            patch.dict(os.environ, {"DOWNLOADS_DIR": "", "USERPROFILE": r"C:\Users\listener"}, clear=False),
+            patch.object(app_module.os, "name", "nt"),
+            patch.object(app_module, "_windows_known_downloads_dir", return_value=None),
+        ):
+            self.assertEqual(app_module._downloads_dir(), Path(r"C:\Users\listener") / "Downloads")
+
+
 class DesktopBindConfigTests(unittest.TestCase):
     def test_desktop_runtime_defaults_to_loopback(self):
         import app as app_module

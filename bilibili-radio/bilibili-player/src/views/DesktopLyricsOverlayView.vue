@@ -58,6 +58,7 @@ import type { CSSProperties } from 'vue'
 import AppIcon from '@/components/base/AppIcon.vue'
 import { emitTo } from '@tauri-apps/api/event'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { isDesktopRuntime } from '@/desktop/runtime'
 
 const LYRICS_UPDATE_EVENT = 'desktop-lyrics:update'
 const LYRICS_READY_EVENT = 'desktop-lyrics:ready'
@@ -121,10 +122,6 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   unlistenUpdate?.()
 })
-
-function isDesktopRuntime(): boolean {
-  return window.location.protocol === 'tauri:' || window.location.hostname === 'tauri.localhost'
-}
 
 async function syncCurrentPayload() {
   try {

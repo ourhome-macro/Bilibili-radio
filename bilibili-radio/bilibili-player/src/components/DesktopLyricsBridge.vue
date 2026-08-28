@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { isDesktopRuntime } from '@/desktop/runtime'
 import { usePlayerStore } from '@/stores/playerStore'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -235,9 +236,6 @@ function handleLyricsControl(payload: LyricsControlPayload) {
   }
 }
 
-function isDesktopRuntime(): boolean {
-  return window.location.protocol === 'tauri:' || window.location.hostname === 'tauri.localhost'
-}
 </script>
 
 <style scoped>

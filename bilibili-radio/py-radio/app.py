@@ -1156,10 +1156,65 @@ def _downloads_dir() -> Path:
     configured = os.getenv("DOWNLOADS_DIR", "").strip()
     if configured:
         return Path(configured).expanduser()
+    if os.name == "nt":
+        known_downloads = _windows_known_downloads_dir()
+        if known_downloads:
+            return known_downloads
     userprofile = os.getenv("USERPROFILE", "").strip()
     if userprofile:
         return Path(userprofile).expanduser() / "Downloads"
     return Path.home() / "Downloads"
+
+
+def _windows_known_downloads_dir() -> Optional[Path]:
+    try:
+        import ctypes
+        from ctypes import wintypes
+    except Exception:
+        return None
+
+    class GUID(ctypes.Structure):
+        _fields_ = [
+            ("Data1", wintypes.DWORD),
+            ("Data2", wintypes.WORD),
+            ("Data3", wintypes.WORD),
+            ("Data4", ctypes.c_ubyte * 8),
+        ]
+
+    folder_id_downloads = GUID(
+        0x374DE290,
+        0x123F,
+        0x4565,
+        (ctypes.c_ubyte * 8)(0x91, 0x64, 0x39, 0xC4, 0x92, 0x5E, 0x46, 0x7B),
+    )
+    path_ptr = wintypes.LPWSTR()
+    try:
+        shell32 = ctypes.windll.shell32
+        ole32 = ctypes.windll.ole32
+        shell32.SHGetKnownFolderPath.argtypes = [
+            ctypes.POINTER(GUID),
+            wintypes.DWORD,
+            wintypes.HANDLE,
+            ctypes.POINTER(wintypes.LPWSTR),
+        ]
+        shell32.SHGetKnownFolderPath.restype = ctypes.c_long
+        result = shell32.SHGetKnownFolderPath(
+            ctypes.byref(folder_id_downloads),
+            0,
+            None,
+            ctypes.byref(path_ptr),
+        )
+        if result != 0 or not path_ptr.value:
+            return None
+        return Path(path_ptr.value)
+    except Exception:
+        return None
+    finally:
+        if path_ptr:
+            try:
+                ole32.CoTaskMemFree(path_ptr)
+            except Exception:
+                pass
 
 
 def _safe_download_filename(title: str, extension: str) -> str:

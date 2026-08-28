@@ -24,6 +24,7 @@ import {
   recordRecommendationEvent,
 } from '@/api/client'
 import { streamingAudioPlayer } from '@/audio/StreamingAudioPlayer'
+import { isDesktopRuntime } from '@/desktop/runtime'
 import { useLibraryStore } from '@/stores/libraryStore'
 
 const PLAY_MODES: PlayMode[] = ['order', 'loop', 'single', 'shuffle']
@@ -804,10 +805,6 @@ export const usePlayerStore = defineStore('player', () => {
     } finally {
       isDownloading.value = false
     }
-  }
-
-  function isDesktopRuntime(): boolean {
-    return window.location.protocol === 'tauri:' || window.location.hostname === 'tauri.localhost'
   }
 
   async function loadCurrentSubtitles(force = false) {
