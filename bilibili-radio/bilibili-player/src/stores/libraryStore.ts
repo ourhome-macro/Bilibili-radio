@@ -181,6 +181,18 @@ export const useLibraryStore = defineStore('library', () => {
     }
   }
 
+  async function refreshRecent() {
+    recent.value = await fetchRecent(RECENT_LIMIT)
+  }
+
+  function updateRecentProgress(track: Track, positionMs: number, completed: boolean) {
+    const current = recent.value.find(item => isSameTrack(item, track))
+    if (current) {
+      current.positionMs = positionMs
+      current.completed = completed
+    }
+  }
+
   function clearRecent() {
     recent.value = []
     if (backendAvailable.value) {
@@ -434,6 +446,8 @@ export const useLibraryStore = defineStore('library', () => {
     syncError,
     initialize,
     refreshFromBackend,
+    refreshRecent,
+    updateRecentProgress,
     addRecent,
     clearRecent,
     removeRecent,

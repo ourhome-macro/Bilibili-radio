@@ -353,6 +353,30 @@ def init_db(db_path: Optional[Path | str] = None) -> None:
                 conn.execute('PRAGMA user_version = 8')
                 current_version = 8
 
+            if current_version < 9:
+                _add_column_if_missing(conn, "playback_sessions", "event_seq", "INTEGER NOT NULL DEFAULT 0")
+                _add_column_if_missing(conn, "playback_sessions", "session_started_ms", "INTEGER NOT NULL DEFAULT 0")
+                _add_column_if_missing(conn, "playback_sessions", "recent_counted", "INTEGER NOT NULL DEFAULT 0")
+                conn.execute("UPDATE playback_sessions SET recent_counted = 1")
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS playback_progress (
+                        user_id TEXT NOT NULL,
+                        track_id TEXT NOT NULL,
+                        session_id TEXT NOT NULL,
+                        session_started_ms INTEGER NOT NULL,
+                        event_seq INTEGER NOT NULL,
+                        position_ms INTEGER NOT NULL DEFAULT 0,
+                        listen_ms INTEGER NOT NULL DEFAULT 0,
+                        completed INTEGER NOT NULL DEFAULT 0,
+                        updated_at TEXT NOT NULL,
+                        PRIMARY KEY (user_id, track_id),
+                        FOREIGN KEY(user_id) REFERENCES app_users(id) ON DELETE CASCADE,
+                        FOREIGN KEY(track_id) REFERENCES tracks(track_id) ON DELETE CASCADE
+                    )
+                """)
+                conn.execute('PRAGMA user_version = 9')
+                current_version = 9
+
             _ensure_current_schema_columns(conn)
 
         _initialized_paths.add(path)

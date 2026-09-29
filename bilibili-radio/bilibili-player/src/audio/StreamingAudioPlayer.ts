@@ -5,6 +5,8 @@ class StreamingAudioPlayer {
   private volume = 1.0
   private isMuted = false
   private playbackRate = 1.0
+  private initialPosition = 0
+  private initialSeekPending = false
 
   private _onStateChange: ((playing: boolean) => void) | null = null
   private _onTimeUpdate: ((currentTime: number, duration: number) => void) | null = null
@@ -62,9 +64,22 @@ class StreamingAudioPlayer {
       })
 
       this.audioElement.addEventListener('canplay', () => {
-        if (this._onCanPlay) {
+        if (this._onCanPlay && !this.initialSeekPending) {
           this._onCanPlay()
         }
+      })
+
+      this.audioElement.addEventListener('loadedmetadata', () => {
+        if (!this.audioElement || this.initialPosition <= 0) return
+        const target = Math.min(this.initialPosition, Math.max(0, this.audioElement.duration - 0.25))
+        this.initialPosition = 0
+        this.initialSeekPending = Number.isFinite(target) && target > 0
+        if (this.initialSeekPending) this.audioElement.currentTime = target
+      })
+      this.audioElement.addEventListener('seeked', () => {
+        if (!this.initialSeekPending) return
+        this.initialSeekPending = false
+        if (this.audioElement && this.audioElement.readyState >= 2) this._onCanPlay?.()
       })
 
       return true
@@ -74,13 +89,15 @@ class StreamingAudioPlayer {
     }
   }
 
-  loadStream(streamInfo: AudioStreamInfo) {
+  loadStream(streamInfo: AudioStreamInfo, position = 0) {
     if (!this.audioElement) {
       console.error('Audio element not initialized')
       return
     }
 
     console.log('[StreamingAudioPlayer] Loading stream:', streamInfo.url)
+    this.initialPosition = position
+    this.initialSeekPending = position > 0
     this.audioElement.src = streamInfo.url
     this.applyPlaybackRate()
     this.audioElement.load()
@@ -115,6 +132,8 @@ class StreamingAudioPlayer {
   }
 
   stop() {
+    this.initialPosition = 0
+    this.initialSeekPending = false
     if (this.audioElement) {
       this.audioElement.pause()
       this.audioElement.currentTime = 0

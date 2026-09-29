@@ -1,0 +1,82 @@
+{
+  "version": "0.2.0",
+  "environment": "Windows native app with packaged backend and isolated SQLite backup",
+  "originalDatabaseUnchanged": false,
+  "realData": {
+    "sourceSchema": 8,
+    "targetSchema": 9,
+    "tracks": 1853,
+    "queue": 105,
+    "recent": 114,
+    "playlists": 1,
+    "migrationPreservedCounts": true,
+    "quickCheck": "ok",
+    "realStreamResolved": true,
+    "resumeAndBackgroundHotkeysPassed": true,
+    "previousSwitchesOnce": true,
+    "minimizeAndCloseToTray": true
+  },
+  "singleInstance": {
+    "coldLaunchCount": 10,
+    "sameWindowHandle": true,
+    "minimizedBeforeReopen": true,
+    "currentDesktopInstances": 1,
+    "coldSurvivors": 1,
+    "restoredVisible": true,
+    "warmLaunchCount": 10,
+    "backendProcessGroups": 1
+  },
+  "windowGeometry": {
+    "maximizedBeforeExit": true,
+    "lyricsReopened": {
+      "y": 180,
+      "x": 160,
+      "width": 920,
+      "height": 112
+    },
+    "mainRestored": {
+      "y": 150,
+      "x": 120,
+      "width": 1100,
+      "height": 720
+    },
+    "lyricsAfterRestart": {
+      "y": 180,
+      "x": 160,
+      "width": 920,
+      "height": 112
+    },
+    "lyricsMoved": {
+      "y": 180,
+      "x": 160,
+      "width": 920,
+      "height": 112
+    },
+    "realDatabaseCopy": true,
+    "closeHidden": true,
+    "mainMoved": {
+      "y": 150,
+      "x": 120,
+      "width": 1100,
+      "height": 720
+    },
+    "maximizedRestored": true,
+    "forcedRestart": true
+  },
+  "exit": {
+    "realDatabaseCopy": true,
+    "crashBackendStillRunning": false,
+    "trayExit": true,
+    "backendStillRunning": false,
+    "lastCheckpoint": {
+      "last_event": "quit",
+      "last_position_ms": 358691
+    }
+  },
+  "originalDatabaseCheck": {
+    "sourceSchemaStill8": true,
+    "sourceProgressTableAbsent": true,
+    "currentTracks": 1886,
+    "note": "Original v8 data changed during the session; test runs used the separate backup profile and did not restore over the original."
+  }
+}

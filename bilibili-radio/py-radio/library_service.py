@@ -87,9 +87,11 @@ class LibraryService:
             rows = conn.execute(
                 """
                 SELECT t.*, r.last_played_at, r.play_count AS recent_play_count,
-                       r.position_ms, r.listen_ms, r.completed
+                       COALESCE(p.position_ms, r.position_ms) AS position_ms,
+                       r.listen_ms, COALESCE(p.completed, r.completed) AS completed
                 FROM recent r
                 JOIN tracks t ON t.track_id = r.track_id
+                LEFT JOIN playback_progress p ON p.user_id = r.user_id AND p.track_id = r.track_id
                 WHERE r.user_id = ?
                 ORDER BY r.last_played_at DESC
                 LIMIT ?

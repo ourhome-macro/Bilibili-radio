@@ -24,6 +24,21 @@ import type {
   TrackReview,
   TrackSubtitles,
 } from '@/types'
+import type { ProgressEvent, ResumePoint } from '@/audio/playbackProgress'
+
+export function fetchPlaybackResume(trackId: string): Promise<ResumePoint> {
+  return apiRequest(`/api/playback/resume/${encodeURIComponent(trackId)}`, {
+    signal: AbortSignal.timeout(2500),
+  })
+}
+
+export function savePlaybackProgress(event: ProgressEvent): Promise<{ accepted: boolean; recentCounted?: boolean }> {
+  return apiRequest('/api/playback/events', {
+    method: 'POST', body: JSON.stringify(event),
+    headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(2500), keepalive: true,
+  })
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 let csrfToken: string | null = null

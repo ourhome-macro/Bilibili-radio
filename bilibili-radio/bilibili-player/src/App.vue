@@ -2,6 +2,7 @@
   <RouterView v-if="isAuthLayout || isOverlayLayout" />
   <AppShell v-else />
   <DesktopLyricsBridge v-if="!isAuthLayout && !isOverlayLayout" />
+  <DesktopControlBridge v-if="!isAuthLayout && !isOverlayLayout" />
   <Transition name="nowplaying">
     <NowPlayingView v-if="!isAuthLayout && !isOverlayLayout && ui.nowPlayingOpen" />
   </Transition>
@@ -16,6 +17,7 @@ import { useUiStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import AppShell from '@/components/layout/AppShell.vue'
 import DesktopLyricsBridge from '@/components/DesktopLyricsBridge.vue'
+import DesktopControlBridge from '@/components/DesktopControlBridge.vue'
 import NowPlayingView from '@/views/NowPlayingView.vue'
 
 const route = useRoute()

@@ -210,11 +210,7 @@ async function bindLyricsWindowEvents() {
 function handleLyricsControl(payload: LyricsControlPayload) {
   switch (payload.action) {
     case 'toggle-play':
-      if (player.status === 'playing') {
-        player.pause()
-      } else if (player.status === 'paused') {
-        player.resume()
-      }
+      player.togglePlayPause()
       break
     case 'prev':
       player.prev()

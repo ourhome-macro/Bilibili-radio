@@ -32,4 +32,7 @@ py-radio/.venv-desktop/
 bilibili-player/src-tauri/target/
 bilibili-player/src-tauri/gen/
 agent/
-*tar*
+# Archives only; broad *tar* also hid source files such as startup_gate.rs.
+*.tar
+*.tar.*
+*.tgz

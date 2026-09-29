@@ -11,6 +11,7 @@
             <span class="count">{{ player.queue.length }}</span>
           </div>
           <div class="drawer-actions">
+            <button class="text-btn" title="定位当前播放" :disabled="!player.currentTrack" @click="locateCurrent(true)">定位</button>
             <button
               class="text-btn"
               :disabled="player.queue.length === 0"
@@ -24,7 +25,7 @@
           </div>
         </header>
 
-        <div class="drawer-body">
+        <div ref="queueBody" class="drawer-body" @wheel.passive="followCurrent = false" @touchstart.passive="followCurrent = false" @pointerdown="followCurrent = false">
           <label v-if="player.queue.length > 0" class="local-search">
             <AppIcon name="search" :size="16" />
             <input v-model="query" type="search" placeholder="搜索播放队列" />
@@ -39,6 +40,7 @@
               :key="item.track.trackId ?? `${item.track.bvid}:${item.track.cid ?? item.queueIndex}`"
               class="queue-row"
               :data-queue-index="item.queueIndex"
+              :data-track-id="playbackTrackId(item.track)"
               :class="{
                 current: item.queueIndex === player.currentIndex,
                 playing: player.isPlaying && item.queueIndex === player.currentIndex,
@@ -92,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { usePlayerStore } from '@/stores/playerStore'
 import { useLibraryStore } from '@/stores/libraryStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -100,11 +102,30 @@ import { usePointerReorder } from '@/composables/usePointerReorder'
 import type { Track } from '@/types'
 import AppIcon from '@/components/base/AppIcon.vue'
 import EmptyState from '@/components/base/EmptyState.vue'
+import { playbackTrackId } from '@/audio/playbackProgress'
+import { locateTrack } from '@/composables/locateTrack'
 
 const player = usePlayerStore()
 const library = useLibraryStore()
 const ui = useUiStore()
 const query = ref('')
+const queueBody = ref<HTMLElement | null>(null)
+const followCurrent = ref(true)
+const currentKey = computed(() => player.currentTrack ? playbackTrackId(player.currentTrack) : null)
+
+async function locateCurrent(clearSearch = false) {
+  if (clearSearch) query.value = ''
+  followCurrent.value = true
+  await nextTick()
+  locateTrack(queueBody.value, currentKey.value)
+}
+
+watch([() => ui.queueOpen, currentKey, () => ui.queueLocateRequest], ([open, key, request], previous) => {
+  if (!open) return
+  if (!previous || request !== previous[2]) void locateCurrent(true)
+  else if (!previous[0]) void locateCurrent()
+  else if (key !== previous[1] && followCurrent.value && !query.value) void locateCurrent()
+}, { flush: 'post' })
 const { dragIndex, dropIndex, startReorder } = usePointerReorder({
   dataAttribute: 'data-queue-index',
   onMove: (from, to) => player.moveQueueItem(from, to),
