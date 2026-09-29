@@ -2,6 +2,15 @@
 
 面向 Windows 的 B 站音频播放器，使用 Vue 3 / Pinia、Tauri 2 和内嵌 Flask 后端。支持多 P 曲目、播放队列、歌单、收藏、最近播放、悬浮歌词、音质与倍速选择。
 
+0.2.0 增加持续保存播放进度、后台快捷键、系统托盘、双窗口位置记忆和当前曲目定位。重复启动会唤起已有窗口；上一曲点击一次即切换。实现及测试记录见 [桌面体验验证报告](doc/desktop-playback-tray-implementation-2026-09-29.md)。
+
+## 桌面操作
+
+- `Ctrl+Alt+Space`：播放/暂停；`Ctrl+Alt+←`：上一曲；`Ctrl+Alt+→`：下一曲，后台或托盘中均可用。
+- 最小化和关闭主窗口都会进入托盘。双击托盘图标恢复，右键菜单选择“退出”才完全退出。
+- 播放队列打开时定位当前曲目；队列和歌单中的“定位当前播放”按钮可随时找回当前项。
+- 主窗口和歌词窗口分别记住位置；重新启动恢复队列及进度，点击播放后续播。
+
 ## 下载与发布
 
 安装包通过 [GitHub Releases](https://github.com/ourhome-macro/Bilibili-radio/releases) 分发。当前采用无代码签名的 Windows x64 NSIS 安装包，Windows 可能显示未知发布者或 SmartScreen 提示。
@@ -45,7 +54,7 @@ python -m unittest discover -s scripts/tests -v
 python scripts/check_desktop_version.py
 ```
 
-后端测试使用临时数据库。版本检查需要 Python 3.11+，流水线固定为 3.12。完整流水线还包含前端类型检查、Windows 打包及打包后端启动测试。
+后端测试使用临时数据库。版本检查需要 Python 3.11+，流水线固定为 3.12。在 `bilibili-player` 目录运行 `npm test` 执行播放器及组件回归。完整流水线还包含前端类型检查、Windows 打包、原生窗口规则测试及打包后端启动测试。
 
 ## 文档
 

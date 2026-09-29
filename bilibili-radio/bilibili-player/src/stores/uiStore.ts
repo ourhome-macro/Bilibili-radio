@@ -29,6 +29,7 @@ export const useUiStore = defineStore('ui', () => {
   const stored = (localStorage.getItem(THEME_KEY) as Theme | null) ?? 'light'
   const theme = ref<Theme>(stored)
   const queueOpen = ref(false)
+  const queueLocateRequest = ref(0)
   const nowPlayingOpen = ref(false)
   const reducedMotion = ref(detectReducedMotion())
   const lyricsOverlayEnabled = ref(false)
@@ -63,6 +64,11 @@ export const useUiStore = defineStore('ui', () => {
 
   function toggleQueue() {
     queueOpen.value = !queueOpen.value
+  }
+
+  function locateCurrentInQueue() {
+    queueOpen.value = true
+    queueLocateRequest.value++
   }
 
   function openNowPlaying() {
@@ -102,6 +108,8 @@ export const useUiStore = defineStore('ui', () => {
   return {
     theme,
     queueOpen,
+    queueLocateRequest,
+    locateCurrentInQueue,
     nowPlayingOpen,
     reducedMotion,
     lyricsOverlayEnabled,

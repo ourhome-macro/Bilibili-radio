@@ -1,0 +1,108 @@
+{
+  "baseline": "0.2.0 implementation",
+  "environment": "Headless Edge + actual Vue/Pinia source + controlled HTTP/audio fixtures",
+  "cases": [
+    {
+      "id": "resume-existing",
+      "savedPositionMs": 45000,
+      "afterPlay": {
+        "index": 980,
+        "time": 45,
+        "status": "playing",
+        "title": "测试曲目 981"
+      },
+      "resumeRequestCount": 2
+    },
+    {
+      "id": "previous-single-click",
+      "before": {
+        "index": 980,
+        "time": 40,
+        "status": "playing",
+        "title": "测试曲目 981"
+      },
+      "firstClick": {
+        "index": 979,
+        "time": 0,
+        "status": "loading",
+        "title": "测试曲目 980"
+      }
+    },
+    {
+      "id": "queue-locate",
+      "currentIndex": "979",
+      "scrollTop": 42823,
+      "currentRowTop": 370,
+      "viewportTop": 63,
+      "viewportBottom": 720,
+      "visible": true,
+      "explicitLocateClearedFilter": true
+    },
+    {
+      "id": "progress-persistence",
+      "method": "Controlled timeupdate events 0..60s on real HTMLAudioElement and unmodified store",
+      "beforeReload": {
+        "index": 0,
+        "time": 60,
+        "status": "paused",
+        "title": "测试曲目 001"
+      },
+      "historyWriteCount": 2,
+      "recordedPositionMs": 60000,
+      "afterReload": {
+        "index": 0,
+        "time": 60,
+        "status": "idle",
+        "title": "测试曲目 001"
+      },
+      "afterReplay": {
+        "index": 0,
+        "time": 60,
+        "status": "playing",
+        "title": "测试曲目 001"
+      },
+      "playbackEventRequests": 6
+    },
+    {
+      "id": "offline-reload",
+      "restored": {
+        "index": 0,
+        "time": 25,
+        "status": "idle",
+        "title": "测试曲目 001"
+      }
+    },
+    {
+      "id": "offline-recovery",
+      "savedPositionMs": 25000
+    },
+    {
+      "id": "playlist-locate-1000",
+      "visible": true
+    }
+  ],
+  "browserErrors": [],
+  "requestPaths": [
+    "GET /api/session/me",
+    "GET /api/auth/status",
+    "GET /api/library/recent",
+    "GET /api/library/likes",
+    "GET /api/library/playlists",
+    "GET /api/player/queue",
+    "GET /api/settings",
+    "GET /api/playback/resume/bili%3ABV1Q541167Qg%3Acid%3A1981",
+    "GET /api/recommendations",
+    "GET /api/tracks/BV1Q541167Qg/1981/stream-info",
+    "GET /api/tracks/BV1Q541167Qg",
+    "GET /api/tracks/BV1Q541167Qg/1981/cover",
+    "POST /api/playback/events",
+    "GET /api/tracks/BV1Q541167Qg/1980/stream-info",
+    "GET /api/playback/resume/bili%3ABV1Q541167Qg%3Acid%3A1980",
+    "GET /api/tracks/BV1Q541167Qg/1980/cover",
+    "PUT /api/player/queue",
+    "GET /api/tracks/BV1Q541167Qg/1001/stream-info",
+    "GET /api/playback/resume/bili%3ABV1Q541167Qg%3Acid%3A1001",
+    "GET /api/tracks/BV1Q541167Qg/1001/cover",
+    "POST /api/recommendations/events"
+  ]
+}

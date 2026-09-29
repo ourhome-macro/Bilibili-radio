@@ -89,6 +89,7 @@
         <ProgressBar />
         <span class="time">{{ player.formattedDuration }}</span>
       </div>
+      <span v-if="player.progressSyncError" class="progress-sync-note" role="status">{{ player.progressSyncError }}</span>
     </div>
 
     <!-- 右侧 30%：辅助操作 -->
@@ -329,6 +330,7 @@ function handleQueueAddEffect(event: Event) {
 </script>
 
 <style scoped>
+.progress-sync-note { font-size: 11px; color: var(--color-text-secondary); position: absolute; bottom: 2px; }
 .player-bar {
   height: var(--player-height);
   background: var(--color-bg-content);

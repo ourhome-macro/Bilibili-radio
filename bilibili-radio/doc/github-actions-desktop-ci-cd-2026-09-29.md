@@ -30,22 +30,23 @@ npm、pip 和 Rust 依赖启用缓存。Rust 构建缓存只允许 main 的 push
 测试任务分别运行在 Ubuntu 24.04 和 Windows Server 2022：
 
 - 安装固定直接版本的 Python 依赖。
-- 执行 95 项后端测试，包括字幕来源约束、缓存并发、身份与权限、会话与 CSRF、曲库、播放、推荐、下载基础行为、数据隔离和数据库迁移。
+- 执行 107 项后端测试，包括字幕来源约束、缓存并发、身份与权限、会话与 CSRF、曲库、播放、推荐、下载基础行为、数据隔离、数据库迁移及续播/事件幂等性。
 - 执行 6 项发布版本规则测试，验证标签不匹配、Cargo 清单或锁文件未同步等情况会失败。
 - 校验 Tauri、Cargo.toml、Cargo.lock 的桌面版本一致。
-- 使用 npm ci 安装前端依赖，执行 TypeScript/Vue 类型检查和 Vite 生产构建。
+- 使用 npm ci 安装前端依赖，执行 TypeScript/Vue 类型检查、Vite 生产构建及 21 项 Vitest 播放器/组件回归。
 
 所有测试通过后，在 Windows Server 2022 上：
 
 1. 使用固定 Rust 工具链构建；Cargo 使用 --locked，不自动改写依赖锁。
 2. 调用现有 Tauri 构建入口，先构建前端，再用 PyInstaller 6.11.1 打包内嵌 Python 后端。
 3. 生成 x64 NSIS `.exe` 安装包。
-4. 启动打包后的后端，以临时数据目录和随机本地端口检查 `/health/live`、`/health/ready`，结束后终止本次测试创建的进程树。
-5. 生成安装包 SHA-256 和包含版本、提交、平台的 build-info.json。
+4. 使用 cargo test --release --locked 执行 3 项原生窗口几何规则测试。
+5. 启动打包后的后端，以临时数据目录和随机本地端口检查 `/health/live`、`/health/ready`，结束后终止本次测试创建的进程树。
+6. 生成安装包 SHA-256 和包含版本、提交、平台的 build-info.json。
 
-测试和打包后的后端启动检查都使用临时数据库，不操作用户已有曲库。GUI 点击、音频播放和实际登录不在本轮自动化覆盖范围内。
+测试和打包后的后端启动检查都使用临时数据库，不操作用户已有曲库。GitHub runner 不执行 GUI 点击、音频播放和实际登录；本机原生交互及真实数据副本的验证见 [0.2.0 实现报告](desktop-playback-tray-implementation-2026-09-29.md)。
 
-## 为何补回测试和打包脚本
+## 首次 CI 接入背景（0.1.4）
 
 8 月 28 日 main 快照删除了 py-radio/tests 和 deploy，而 Tauri 配置仍引用 deploy/build-desktop-backend.ps1。直接添加 YAML 会遇到“无测试可跑”和“打包脚本不存在”。
 
@@ -79,14 +80,14 @@ npm、pip 和 Rust 依赖启用缓存。Rust 构建缓存只允许 main 的 push
 
 工作流已随 `cc76d59` 推送到 `develop/restore-main-0828`，首次云端运行成功；尚未合并 main 或发布版本标签。建议先合并至 main，确认分支 CI 成功，再发布版本标签。若仓库组织策略限制了 Actions 或 GITHUB_TOKEN 写权限，需要在仓库/组织设置中允许这些操作。
 
-例如要发布 0.1.5，先将三个桌面版本位置一起更新为 0.1.5，提交代码，并确保当前提交已经包含工作流，然后执行：
+当前源码版本是 0.2.0。确认目标提交已推送且通过 CI 后，可用以下命令发布该版本；以后发布 0.2.1 时，先同步修改三个版本位置并提交，再使用 v0.2.1 标签。
 
 ```powershell
-git tag -a v0.1.5 -m "Bilibili Radio v0.1.5"
-git push bilibili-radio v0.1.5
+git tag -a v0.2.0 -m "Bilibili Radio v0.2.0"
+git push bilibili-radio v0.2.0
 ```
 
-这两条命令仅为发布说明，本次未执行，未创建标签或 Release。当前源码仍保持 0.1.4。
+这两条命令仅为发布说明，本次未执行，未创建标签或 Release。
 
 ## 本地检查
 
@@ -100,13 +101,14 @@ python scripts/run_backend_tests.py
 
 ```powershell
 py -3.12 -m unittest discover -s scripts/tests -v
-py -3.12 scripts/check_desktop_version.py --tag v0.1.4
+py -3.12 scripts/check_desktop_version.py --tag v0.2.0
 ```
 
 在 bilibili-player 目录：
 
 ```powershell
 npm ci
+npm test
 npm run desktop:build -- --ci --no-sign --bundles nsis -- --locked
 ```
 
@@ -116,7 +118,7 @@ npm run desktop:build -- --ci --no-sign --bundles nsis -- --locked
 py -3.12 scripts/smoke_desktop_backend.py py-radio/dist/bilibili-radio-backend.exe
 ```
 
-## 本次验证记录
+## 首次 CI 接入验证记录（0.1.4，cc76d59）
 
 - 95 项后端测试：在 Windows 的 Python 3.10 环境及全新 Python 3.12 环境均通过。
 - 6 项发布版本规则测试：通过。
@@ -131,6 +133,8 @@ py -3.12 scripts/smoke_desktop_backend.py py-radio/dist/bilibili-radio-backend.e
 本地验证安装包位于 `bilibili-player/src-tauri/target/release/bundle/nsis/Bilibili Radio_0.1.4_x64-setup.exe`，本次没有执行安装器或覆盖已安装客户端。完整本地安装包构建使用现有 Python 3.10 打包环境；Python 3.12 的后端单独在临时目录构建并验证，GitHub Windows 构建任务会在干净环境使用 Python 3.12 完成整包构建。
 
 当前按用户选择发布无签名包。Windows 可能显示未知发布者或 SmartScreen 提示，受管理的设备也可能禁止运行；不能保证所有电脑都允许继续安装。[微软说明](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation)。此流程也不等于应用内自动更新。
+
+0.2.0 增量验证记录和本地安装包信息见 [桌面播放体验实现与验证](desktop-playback-tray-implementation-2026-09-29.md)。以上 95 项测试和 0.1.4 包是首次接入时的历史结果。
 
 ## 官方参考
 

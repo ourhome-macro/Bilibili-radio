@@ -22,9 +22,13 @@ import {
   savePlayerQueue,
   updateSettings,
   recordRecommendationEvent,
+  fetchPlaybackResume,
+  savePlaybackProgress,
 } from '@/api/client'
 import { streamingAudioPlayer } from '@/audio/StreamingAudioPlayer'
 import { useLibraryStore } from '@/stores/libraryStore'
+import { useAuthStore } from '@/stores/authStore'
+import { ProgressOutbox, playbackTrackId, newerResume, resumeSeconds, type ProgressEvent, type ResumePoint } from '@/audio/playbackProgress'
 
 const PLAY_MODES: PlayMode[] = ['order', 'loop', 'single', 'shuffle']
 const AUDIO_QUALITIES: AudioQualityPreference[] = ['auto', '64k', '132k', '192k', 'dolby', 'hires']
@@ -115,6 +119,12 @@ export const usePlayerStore = defineStore('player', () => {
   const playbackSpeed = ref(initialSettingsSnapshot.playbackSpeed)
   const settingsBackendAvailable = ref(false)
   const settingsSyncError = ref<string | null>(null)
+  const progressSyncError = ref<string | null>(null)
+  const auth = useAuthStore()
+  const progressOutboxes = new Map<string, ProgressOutbox>()
+  let progressSession: { track: Track; owner: string; id: string; started: number; seq: number; ready: boolean } | null = null
+  let progressTimer: ReturnType<typeof setInterval> | null = null
+  let lastSessionStarted = 0
 
   // 播放队列
   const queue = ref<Track[]>(initialQueueSnapshot.queue)
@@ -137,6 +147,72 @@ export const usePlayerStore = defineStore('player', () => {
   let playbackLastPosition: number | null = null
   let autoplaySeq: number | null = null
   let playbackBehaviorRecorded = false
+
+  function progressOwner(): string { return auth.appUser?.id ?? 'legacy-owner' }
+
+  function progressOutbox(owner = progressOwner()): ProgressOutbox {
+    let outbox = progressOutboxes.get(owner)
+    if (!outbox) {
+      outbox = new ProgressOutbox(owner, localStorage, async (event) => {
+        if (progressOwner() !== owner) throw new Error('播放进度等待原用户重新登录')
+        const result = await savePlaybackProgress(event)
+        if (result.recentCounted) void useLibraryStore().refreshRecent().catch(() => undefined)
+        return result
+      })
+      progressOutboxes.set(owner, outbox)
+    }
+    return outbox
+  }
+
+  async function savedProgress(track: Track): Promise<ResumePoint | null> {
+    const id = playbackTrackId(track)
+    const local = progressOutbox().read(id)
+    try {
+      return newerResume(local, await fetchPlaybackResume(id))
+    } catch {
+      return local
+    }
+  }
+
+  async function flushProgress(event: ProgressEvent['event'] = 'heartbeat'): Promise<void> {
+    const session = progressSession
+    let cached = true
+    if (session?.ready) {
+      const snapshot: ProgressEvent = {
+        trackId: playbackTrackId(session.track), track: session.track,
+        sessionId: session.id, sessionStartedAtMs: session.started, eventSeq: ++session.seq,
+        positionMs: Math.max(0, Math.round(streamingAudioPlayer.getCurrentTime() * 1000)),
+        listenMs: Math.max(0, Math.round(playbackListenSeconds * 1000)),
+        completed: event === 'ended', event, lastPlayedAt: new Date().toISOString(),
+      }
+      if (session.owner === progressOwner()) {
+        useLibraryStore().updateRecentProgress(session.track, snapshot.positionMs, snapshot.completed)
+      }
+      try { progressOutbox(session.owner).save(snapshot) }
+      catch { cached = false; progressSyncError.value = '本机进度缓存写入失败，正在尝试同步' }
+    }
+    try {
+      await progressOutbox().flush()
+      progressSyncError.value = null
+    } catch {
+      progressSyncError.value = cached ? '进度已暂存本机，连接恢复后自动同步' : '进度保存失败，请检查本机存储和后端连接'
+    }
+  }
+
+  async function prepareForExit(): Promise<void> {
+    playSeq++
+    autoplaySeq = null
+    if (progressTimer) clearInterval(progressTimer)
+    progressTimer = null
+    streamingAudioPlayer.pause()
+    await Promise.all([flushProgress('quit'), persistQueueRemote()])
+  }
+
+  function saveBeforeUnload() { void flushProgress('quit') }
+
+  watch(() => auth.appUser?.id, (next, previous) => {
+    if (previous && previous !== next) stop()
+  })
 
   const currentTrack = computed<Track | null>(() => {
     if (currentIndex.value < 0 || currentIndex.value >= queue.value.length) return null
@@ -324,6 +400,8 @@ export const usePlayerStore = defineStore('player', () => {
     streamingAudioPlayer.onCanPlay(() => {
       if (autoplaySeq !== playSeq || status.value !== 'loading') return
       autoplaySeq = null
+      if (progressSession) progressSession.ready = true
+      currentTime.value = streamingAudioPlayer.getCurrentTime()
       streamingAudioPlayer.play()
     })
 
@@ -332,6 +410,19 @@ export const usePlayerStore = defineStore('player', () => {
     void restorePersistedSettings()
 
     isInitialized.value = true
+    if (!progressTimer) {
+      progressTimer = setInterval(() => {
+        void flushProgress()
+      }, 5000)
+      window.addEventListener('beforeunload', saveBeforeUnload)
+    }
+    const restored = currentTrack.value
+    if (restored && status.value === 'idle') {
+      const point = await savedProgress(restored)
+      if (status.value === 'idle' && currentTrack.value && isSameTrack(restored, currentTrack.value)) {
+        currentTime.value = resumeSeconds(point, restored.duration)
+      }
+    }
   }
 
   async function restorePersistedSettings() {
@@ -371,8 +462,10 @@ export const usePlayerStore = defineStore('player', () => {
     errorMessage.value = null
   }
 
-  async function requestPlayTrack(track: Track) {
+  async function requestPlayTrack(track: Track, restart = false) {
     const seq = ++playSeq
+    void flushProgress('change')
+    progressSession = null
     playRequestSerial.value = seq
     recordPlaybackBehaviorBeforeTrackChange()
     clearError()
@@ -408,6 +501,13 @@ export const usePlayerStore = defineStore('player', () => {
         cid: resolvedCid,
         duration: streamInfo.duration || track.duration,
       }
+      playableTrack.trackId = playbackTrackId(playableTrack)
+      const point = restart ? null : await savedProgress(playableTrack)
+      if (seq !== playSeq) return
+      const initialPosition = resumeSeconds(point, playableTrack.duration)
+      lastSessionStarted = Math.max(Date.now(), lastSessionStarted + 1, (point?.sessionStartedAtMs ?? 0) + 1)
+      progressSession = { track: { ...playableTrack }, owner: progressOwner(),
+        id: crypto.randomUUID(), started: lastSessionStarted, seq: 0, ready: false }
       syncQueueCurrentTrack(playableTrack)
       videoInfo.value = trackToVideoInfo(playableTrack)
       duration.value = playableTrack.duration
@@ -419,7 +519,8 @@ export const usePlayerStore = defineStore('player', () => {
 
       statusMessage.value = '正在缓冲音频...'
       autoplaySeq = seq
-      streamingAudioPlayer.loadStream(streamInfo)
+      currentTime.value = initialPosition
+      streamingAudioPlayer.loadStream(streamInfo, initialPosition)
       hydrateTrackMetadataInBackground(playableTrack, seq)
     } catch (error) {
       if (seq !== playSeq) return
@@ -600,24 +701,21 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function prev() {
-    // 播放超过 3 秒时，上一首先回到开头
-    if (currentTime.value > 3) {
-      seek(0)
-      return
-    }
     const p = prevIndex()
-    if (p === -1) return
+    if (p === -1 || p === currentIndex.value) return
     playAt(p)
   }
 
   function handleTrackEnded() {
+    void flushProgress('ended')
+    progressSession = null
     maybeRecordRecentProgress(true)
     recordPlaybackBehavior('completed')
     if (playMode.value === 'single') {
       // 单曲循环：重新播放当前曲目
       const track = currentTrack.value
       if (track) {
-        void requestPlayTrack(track)
+        void requestPlayTrack(track, true)
         return
       }
     }
@@ -699,7 +797,7 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function togglePlayPause() {
-    if (status.value === 'playing') {
+    if (status.value === 'playing' || status.value === 'loading') {
       pause()
     } else if (status.value === 'paused') {
       resume()
@@ -713,14 +811,21 @@ export const usePlayerStore = defineStore('player', () => {
     autoplaySeq = null
     streamingAudioPlayer.pause()
     status.value = 'paused'
+    void flushProgress('pause')
   }
 
   function resume() {
+    if (!progressSession?.ready) {
+      if (currentTrack.value) void requestPlayTrack(currentTrack.value)
+      return
+    }
     streamingAudioPlayer.resume()
     status.value = 'playing'
   }
 
   function stop() {
+    void flushProgress('stop')
+    progressSession = null
     maybeRecordRecentProgress(false)
     recordPlaybackBehaviorBeforeTrackChange()
     playSeq++
@@ -736,7 +841,9 @@ export const usePlayerStore = defineStore('player', () => {
 
   function seek(timeSeconds: number) {
     streamingAudioPlayer.seek(timeSeconds)
-    currentTime.value = timeSeconds
+    currentTime.value = streamingAudioPlayer.getCurrentTime()
+    playbackLastPosition = currentTime.value
+    void flushProgress('seek')
   }
 
   function setVolume(value: number) {
@@ -947,15 +1054,10 @@ export const usePlayerStore = defineStore('player', () => {
     const requiredListenSeconds = Math.max(0, dur * RECENT_RECORD_RATIO - 1)
     if (playbackListenSeconds < requiredListenSeconds) return
 
-    const watchedSeconds = Math.max(currentTime.value, playbackListenSeconds)
     const completedByPosition = completed && currentTime.value >= dur * 0.95
 
     playbackRecentRecorded = true
-    useLibraryStore().addRecent(track, {
-      positionMs: Math.round(watchedSeconds * 1000),
-      listenMs: Math.round(playbackListenSeconds * 1000),
-      completed: completedByPosition,
-    })
+    void flushProgress(completed ? 'ended' : 'heartbeat')
     recordPlaybackBehavior(completedByPosition ? 'completed' : 'played')
   }
 
@@ -990,10 +1092,6 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function accumulatePlaybackListenTime(position: number) {
-    if (playbackRecentRecorded) {
-      playbackLastPosition = position
-      return
-    }
     if (playbackLastPosition === null) {
       playbackLastPosition = position
       return
@@ -1097,6 +1195,11 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function disconnect() {
+    void flushProgress('stop')
+    progressSession = null
+    if (progressTimer) clearInterval(progressTimer)
+    progressTimer = null
+    window.removeEventListener('beforeunload', saveBeforeUnload)
     playSeq++
     streamingAudioPlayer.destroy()
     isInitialized.value = false
@@ -1123,6 +1226,9 @@ export const usePlayerStore = defineStore('player', () => {
     playbackSpeed,
     settingsBackendAvailable,
     settingsSyncError,
+    progressSyncError,
+    flushProgress,
+    prepareForExit,
     queue,
     currentIndex,
     playMode,

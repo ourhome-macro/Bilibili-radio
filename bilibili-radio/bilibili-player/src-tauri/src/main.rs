@@ -1,5 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod backend_job;
+mod desktop_controls;
+mod startup_gate;
+mod window_geometry;
+
 use std::{
     env,
     io::{Read, Write},
@@ -14,6 +19,7 @@ use std::{
 use serde::Serialize;
 use tauri::{
     Emitter, Manager, PhysicalPosition, PhysicalSize, Position, Size, State, WebviewWindow,
+    WindowEvent,
 };
 
 const DEFAULT_DESKTOP_PORT: u16 = 41517;
@@ -33,6 +39,7 @@ const MAX_LYRICS_WINDOW_HEIGHT: f64 = 168.0;
 struct BackendState {
     endpoint: Mutex<Option<String>>,
     child: Mutex<Option<Child>>,
+    job: Mutex<Option<backend_job::BackendJob>>,
     lyrics_payload: Mutex<LyricsPayload>,
 }
 
@@ -110,6 +117,7 @@ impl BackendState {
         Self {
             endpoint: Mutex::new(None),
             child: Mutex::new(None),
+            job: Mutex::new(None),
             lyrics_payload: Mutex::new(default_lyrics_payload()),
         }
     }
@@ -117,6 +125,9 @@ impl BackendState {
 
 impl Drop for BackendState {
     fn drop(&mut self) {
+        if let Ok(job) = self.job.get_mut() {
+            job.take();
+        }
         if let Ok(mut child_guard) = self.child.lock() {
             if let Some(mut child) = child_guard.take() {
                 let _ = child.kill();
@@ -172,6 +183,8 @@ fn hide_lyrics_window(
 
     if let Some(window) = app.get_webview_window(LYRICS_WINDOW_LABEL) {
         let payload = default_lyrics_payload();
+        window_geometry::capture(&app, &window);
+        window_geometry::save(&app);
         *state
             .lyrics_payload
             .lock()
@@ -260,17 +273,32 @@ fn lyrics_window_debug_status(app: tauri::AppHandle) -> LyricsWindowDebug {
 }
 
 fn main() {
-    if let Err(error) = run_app() {
+    let gate = match startup_gate::acquire() {
+        Ok(Some(gate)) => gate,
+        Ok(None) => return,
+        Err(error) => {
+            write_startup_error(&format!("Failed to acquire desktop startup gate: {error}"));
+            return;
+        }
+    };
+    if let Err(error) = run_app(gate) {
         write_startup_error(&format!("{error:#}"));
         panic!("failed to run Bilibili Radio desktop client: {error:#}");
     }
 }
 
-fn run_app() -> tauri::Result<()> {
-    tauri::Builder::default()
+fn run_app(gate: startup_gate::StartupGate) -> tauri::Result<()> {
+    let app = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
+            desktop_controls::show_main(app)
+        }))
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .manage(gate)
+        .manage(desktop_controls::ControlState::default())
         .manage(BackendState::new())
         .setup(|app| {
-            let (endpoint, child) = start_backend(app)?;
+            window_geometry::initialize(app.handle())?;
+            let (endpoint, child, job) = start_backend(app)?;
             let state = app.state::<BackendState>();
             *state
                 .endpoint
@@ -280,8 +308,65 @@ fn run_app() -> tauri::Result<()> {
                 .child
                 .lock()
                 .map_err(|_| "Backend child lock is poisoned".to_string())? = Some(child);
+            *state
+                .job
+                .lock()
+                .map_err(|_| "Backend job lock is poisoned".to_string())? = Some(job);
+            desktop_controls::initialize(app.handle())?;
+            if let Some(window) = app.get_webview_window("main") {
+                window_geometry::restore(app.handle(), &window);
+            }
             initialize_lyrics_window(app.handle());
+            app.state::<window_geometry::GeometryState>()
+                .ready
+                .store(true, std::sync::atomic::Ordering::SeqCst);
+            desktop_controls::show_main(app.handle());
+            startup_gate::listen(app.handle());
+            if let Some(window) = app.get_webview_window("main") {
+                window_geometry::capture(app.handle(), &window);
+            }
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            let app = window.app_handle();
+            let Some(webview) = app.get_webview_window(window.label()) else {
+                return;
+            };
+            let window = &webview;
+            if app
+                .state::<desktop_controls::ControlState>()
+                .quitting
+                .load(std::sync::atomic::Ordering::SeqCst)
+            {
+                return;
+            }
+            match event {
+                WindowEvent::CloseRequested { api, .. } if window.label() == "main" => {
+                    desktop_controls::trace(app, "main close requested");
+                    api.prevent_close();
+                    desktop_controls::hide_main(app, window);
+                }
+                WindowEvent::CloseRequested { api, .. }
+                    if window.label() == LYRICS_WINDOW_LABEL =>
+                {
+                    api.prevent_close();
+                    window_geometry::capture(app, window);
+                    window_geometry::save(app);
+                    let _ = window.hide();
+                    let _ = app.emit_to("main", "desktop:control", "lyrics-close");
+                }
+                WindowEvent::Resized(_)
+                    if window.label() == "main" && window.is_minimized().unwrap_or(false) =>
+                {
+                    desktop_controls::hide_main(app, window);
+                }
+                WindowEvent::Moved(_)
+                | WindowEvent::Resized(_)
+                | WindowEvent::ScaleFactorChanged { .. } => {
+                    window_geometry::capture(app, window);
+                }
+                _ => {}
+            }
         })
         .invoke_handler(tauri::generate_handler![
             desktop_backend_endpoint,
@@ -289,9 +374,32 @@ fn run_app() -> tauri::Result<()> {
             hide_lyrics_window,
             set_lyrics_window_payload,
             current_lyrics_window_payload,
-            lyrics_window_debug_status
+            lyrics_window_debug_status,
+            desktop_controls::finish_desktop_exit,
+            desktop_controls::desktop_control_status
         ])
-        .run(tauri::generate_context!())
+        .build(tauri::generate_context!())?;
+    app.run(|app, event| {
+        if matches!(event, tauri::RunEvent::Exit) {
+            startup_gate::stop(app);
+            window_geometry::save(app);
+            shutdown_backend(app);
+        }
+    });
+    Ok(())
+}
+
+fn shutdown_backend(app: &tauri::AppHandle) {
+    let state = app.state::<BackendState>();
+    if let Ok(mut job) = state.job.lock() {
+        job.take();
+    }
+    if let Ok(mut child) = state.child.lock() {
+        if let Some(mut process) = child.take() {
+            let _ = process.kill();
+            let _ = process.wait();
+        }
+    };
 }
 
 fn ensure_lyrics_window(
@@ -325,7 +433,14 @@ fn initialize_lyrics_window(app: &tauri::AppHandle) {
             "found configured window",
         );
         configure_lyrics_window(&window, &mut debug);
-        if let Err(error) = position_lyrics_window(app, &window) {
+        if window_geometry::restore(app, &window) {
+            record_text_step(
+                &mut debug,
+                "restore_position",
+                true,
+                "saved geometry restored",
+            );
+        } else if let Err(error) = position_lyrics_window(app, &window) {
             record_text_step(&mut debug, "set_position", false, &error);
         } else {
             record_text_step(&mut debug, "set_position", true, "ok");
@@ -472,9 +587,9 @@ fn lyrics_window_position_after_resize(
     previous_position: Option<PhysicalPosition<i32>>,
     previous_size: Option<PhysicalSize<u32>>,
     target_size: PhysicalSize<u32>,
-    was_visible: bool,
+    _was_visible: bool,
 ) -> Option<PhysicalPosition<i32>> {
-    if !was_visible {
+    if previous_position.is_none() || previous_size.is_none() {
         let (x, y) = lyrics_window_initial_position(
             app,
             target_size.width as f64,
@@ -499,7 +614,6 @@ fn reveal_lyrics_window(
     debug: &mut LyricsWindowDebug,
 ) -> Result<(), String> {
     debug.status_before = lyrics_window_snapshot(app);
-    let was_visible = debug.status_before.visible == Some(true);
     configure_lyrics_window(window, debug);
     record_step(
         debug,
@@ -515,13 +629,9 @@ fn reveal_lyrics_window(
         log_lyrics_window_debug(debug);
         return Err(error);
     }
-    if was_visible {
-        record_text_step(debug, "set_position", true, "skip; window already visible");
-    } else if let Err(error) = position_lyrics_window(app, window) {
-        record_text_step(debug, "set_position", false, &error);
-    } else {
-        record_text_step(debug, "set_position", true, "ok");
-    }
+    window_geometry::keep_on_screen(window);
+    window_geometry::capture(app, window);
+    record_text_step(debug, "set_position", true, "preserve user position");
     configure_lyrics_window(window, debug);
     record_step(
         debug,
@@ -698,10 +808,16 @@ fn log_desktop_lyrics_debug(message: &str) {
         .and_then(|mut file| file.write_all(line.as_bytes()));
 }
 
-fn start_backend(app: &tauri::App) -> Result<(String, Child), Box<dyn std::error::Error>> {
+fn start_backend(
+    app: &tauri::App,
+) -> Result<(String, Child, backend_job::BackendJob), Box<dyn std::error::Error>> {
     let port = choose_backend_port()?;
     let endpoint = format!("http://127.0.0.1:{port}");
-    let data_dir = app.path().app_data_dir()?.join("data");
+    let data_dir = if env::var_os("BILIBILI_RADIO_PROFILE_DIR").is_some() {
+        window_geometry::profile_dir(app.handle())?.join("data")
+    } else {
+        app.path().app_data_dir()?.join("data")
+    };
     std::fs::create_dir_all(&data_dir)?;
 
     let mut command = backend_command(app)?;
@@ -717,13 +833,21 @@ fn start_backend(app: &tauri::App) -> Result<(String, Child), Box<dyn std::error
         .stderr(Stdio::null());
 
     let mut child = command.spawn()?;
+    let job = match backend_job::BackendJob::attach(&child) {
+        Ok(job) => job,
+        Err(error) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(error.into());
+        }
+    };
     if let Err(error) = wait_for_ready(port, Duration::from_secs(25)) {
         let _ = child.kill();
         let _ = child.wait();
         return Err(error.into());
     }
 
-    Ok((endpoint, child))
+    Ok((endpoint, child, job))
 }
 
 fn backend_command(app: &tauri::App) -> Result<Command, Box<dyn std::error::Error>> {

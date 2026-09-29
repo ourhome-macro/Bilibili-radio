@@ -67,6 +67,9 @@ jobs:
       - name: Check types and build frontend
         working-directory: bilibili-radio/bilibili-player
         run: npm run build
+      - name: Test player state and components
+        working-directory: bilibili-radio/bilibili-player
+        run: npm test
 
   build:
     name: Windows installer
@@ -119,6 +122,9 @@ jobs:
       - name: Build Windows x64 NSIS installer and embedded Python backend
         working-directory: bilibili-radio/bilibili-player
         run: npm run desktop:build -- --ci --no-sign --bundles nsis -- --locked
+      # Geometry unit tests reuse the release dependencies built above.
+      - name: Test native window geometry
+        run: cargo test --release --locked --manifest-path bilibili-player/src-tauri/Cargo.toml
       - name: Smoke test packaged backend
         run: python scripts/smoke_desktop_backend.py py-radio/dist/bilibili-radio-backend.exe
       - name: Prepare release assets and SHA-256 checksum

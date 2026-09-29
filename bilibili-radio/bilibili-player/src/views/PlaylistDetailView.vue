@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div ref="pageRoot" class="page" @wheel.passive="followCurrent = false" @touchstart.passive="followCurrent = false">
     <template v-if="playlist">
       <div class="detail-top">
         <div class="detail-cover">
@@ -13,6 +13,7 @@
           <input v-model="draftName" class="title-input" maxlength="64" />
           <p class="detail-meta">{{ playlist.tracks.length }} 首</p>
           <div class="detail-actions">
+            <button class="ghost-btn" :disabled="!containsCurrent" :title="containsCurrent ? '定位当前播放' : '当前曲目不在此歌单'" @click="locateCurrent">定位当前播放</button>
             <button class="primary-btn" :disabled="!playlist.tracks.length" @click="playAll">
               <AppIcon name="play" :size="16" />
               <span>播放全部</span>
@@ -50,6 +51,7 @@
           :key="t.trackId ?? `${t.bvid}:${t.cid ?? i}`"
           class="draggable-row"
           :data-track-index="i"
+          :data-track-id="playbackTrackId(t)"
           :class="{ dragging: dragIndex === i, 'drop-target': dropIndex === i && dragIndex !== i }"
         >
           <span
@@ -89,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { resolveTrackInput, mediaUrl } from '@/api/client'
@@ -101,6 +103,8 @@ import AppIcon from '@/components/base/AppIcon.vue'
 import EmptyState from '@/components/base/EmptyState.vue'
 import LoadingDots from '@/components/base/LoadingDots.vue'
 import TrackRow from '@/components/TrackRow.vue'
+import { playbackTrackId } from '@/audio/playbackProgress'
+import { locateTrack } from '@/composables/locateTrack'
 
 const route = useRoute()
 const router = useRouter()
@@ -109,6 +113,18 @@ const library = useLibraryStore()
 const { currentTrack, isPlaying } = storeToRefs(player)
 
 const playlist = computed(() => library.getPlaylist(route.params.id as string))
+const pageRoot = ref<HTMLElement | null>(null)
+const followCurrent = ref(true)
+const containsCurrent = computed(() => playlist.value?.tracks.some(isCurrent) ?? false)
+const currentKey = computed(() => currentTrack.value ? playbackTrackId(currentTrack.value) : null)
+async function locateCurrent() {
+  followCurrent.value = true
+  await nextTick()
+  locateTrack(pageRoot.value, currentKey.value)
+}
+watch([() => playlist.value?.id, currentKey], ([id], previous) => {
+  if (!previous || id !== previous[0] || followCurrent.value) void locateCurrent()
+}, { immediate: true, flush: 'post' })
 const draftName = ref('')
 const addInput = ref('')
 const addLoading = ref(false)
