@@ -17,7 +17,7 @@
 
 安装包通过 [GitHub Releases](https://github.com/ourhome-macro/Bilibili-radio/releases) 分发。当前采用无代码签名的 Windows x64 NSIS 安装包，Windows 可能显示未知发布者或 SmartScreen 提示。
 
-当前正式版：[v0.2.0](https://github.com/ourhome-macro/Bilibili-radio/releases/tag/v0.2.0)。发布与本机升级记录见 [0.2.0 交付记录](doc/desktop-0.2.0-install-and-release-2026-09-29.md)。
+当前正式版：[v0.2.1](https://github.com/ourhome-macro/Bilibili-radio/releases/tag/v0.2.1)。发布与本机升级记录见 [0.2.1 交付记录](doc/metadata-retention-and-progress-0.2.1-2026-09-29.md)。
 
 GitHub Actions 在提交和 PR 时执行自动测试与构建验证；只在推送与桌面版本一致的 `v*` 标签时发布 Release，没有定时发布。详见 [CI/CD 说明](doc/github-actions-desktop-ci-cd-2026-09-29.md)。
 

@@ -1,0 +1,77 @@
+{
+  "version": "0.2.1",
+  "sourceCommit": "062361a85972184f4ca83d276974d2600b837732",
+  "release": {
+    "id": 399256876,
+    "tag": "v0.2.1",
+    "url": "https://github.com/ourhome-macro/Bilibili-radio/releases/tag/v0.2.1",
+    "draft": false,
+    "prerelease": false,
+    "publishedAt": "2026-09-29T14:59:08Z",
+    "assets": [
+      {
+        "name": "Bilibili.Radio_0.2.1_x64-setup.exe",
+        "size": 21098704,
+        "digest": "sha256:12f2b8d0b68a683c356d82043924146c792c399dcce6cf0528d11778c999a2e6",
+        "state": "uploaded",
+        "url": "https://github.com/ourhome-macro/Bilibili-radio/releases/download/v0.2.1/Bilibili.Radio_0.2.1_x64-setup.exe"
+      },
+      {
+        "name": "build-info.json",
+        "size": 135,
+        "digest": "sha256:6c65eb3f5fb3c7a0c4ace0221f4fa5ac99699cd50ad9285be9b151d734e7f550",
+        "state": "uploaded",
+        "url": "https://github.com/ourhome-macro/Bilibili-radio/releases/download/v0.2.1/build-info.json"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 102,
+        "digest": "sha256:3fe3aa35e6e8d426e7b1241b591aa913ec2d3139ef61b81af781039c581ddded",
+        "state": "uploaded",
+        "url": "https://github.com/ourhome-macro/Bilibili-radio/releases/download/v0.2.1/SHA256SUMS.txt"
+      }
+    ]
+  },
+  "tagWorkflow": {
+    "url": "https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36586050986",
+    "jobs": [
+      {
+        "name": "Tests (ubuntu-24.04)",
+        "conclusion": "success"
+      },
+      {
+        "name": "Tests (windows-2022)",
+        "conclusion": "success"
+      },
+      {
+        "name": "Windows installer",
+        "conclusion": "success"
+      },
+      {
+        "name": "Publish GitHub Release",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "branchWorkflow": {
+    "url": "https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36586050917",
+    "jobs": [
+      {
+        "name": "Tests (ubuntu-24.04)",
+        "conclusion": "success"
+      },
+      {
+        "name": "Tests (windows-2022)",
+        "conclusion": "success"
+      },
+      {
+        "name": "Windows installer",
+        "conclusion": "success"
+      },
+      {
+        "name": "Publish GitHub Release",
+        "conclusion": "skipped"
+      }
+    ]
+  }
+}

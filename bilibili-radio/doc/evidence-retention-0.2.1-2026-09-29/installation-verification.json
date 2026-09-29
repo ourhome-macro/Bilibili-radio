@@ -1,0 +1,17 @@
+{
+  "version": "0.2.1",
+  "schema": 10,
+  "quickCheck": "ok",
+  "foreignKeyViolations": 0,
+  "personalRelationsPreserved": true,
+  "singletonVerified": true,
+  "counts": {
+    "tracks": 1902,
+    "likes": 47,
+    "recent": 114,
+    "playlists": 1,
+    "playlist_items": 7,
+    "player_queue_items": 105,
+    "track_reviews": 5
+  }
+}
