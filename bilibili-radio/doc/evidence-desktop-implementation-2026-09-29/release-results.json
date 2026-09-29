@@ -1,0 +1,51 @@
+{
+  "tag": "v0.2.0",
+  "url": "https://github.com/ourhome-macro/Bilibili-radio/releases/tag/v0.2.0",
+  "draft": false,
+  "prerelease": false,
+  "publishedAt": "2026-09-29T13:28:50Z",
+  "latestVerified": true,
+  "sourceCommit": "2f19d17f415e74cd6129aeac2e72efb221ea7eae",
+  "workflowUrl": "https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36574372512",
+  "jobs": [
+    {
+      "name": "Tests (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "name": "Tests (ubuntu-24.04)",
+      "conclusion": "success"
+    },
+    {
+      "name": "Windows installer",
+      "conclusion": "success"
+    },
+    {
+      "name": "Publish GitHub Release",
+      "conclusion": "success"
+    }
+  ],
+  "installerDownloadVerified": true,
+  "checksumFilenameCorrected": true,
+  "installerUnchangedDuringMetadataCorrection": true,
+  "assets": [
+    {
+      "name": "Bilibili.Radio_0.2.0_x64-setup.exe",
+      "sizeBytes": 21092027,
+      "state": "uploaded",
+      "digest": "sha256:cb8f06d30a0c2338bf4bc623ba7345f41af8827dc3f75a4a1f1a8d68b105df16"
+    },
+    {
+      "name": "build-info.json",
+      "sizeBytes": 135,
+      "state": "uploaded",
+      "digest": "sha256:4fc6ca0b5d6875e3d5a3fa707f564931a8fe29f73fbdb46e0755cd03656b8bb2"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "sizeBytes": 101,
+      "state": "uploaded",
+      "digest": "sha256:5f6b727d56c10028e2fed29f8dc9e973aaf899eee8ad41c8eafe819334528bc1"
+    }
+  ]
+}

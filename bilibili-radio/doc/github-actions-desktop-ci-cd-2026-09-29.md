@@ -62,7 +62,7 @@ npm、pip 和 Rust 依赖启用缓存。Rust 构建缓存只允许 main 的 push
 
 发布附件为：
 
-- `Bilibili Radio_<版本>_x64-setup.exe`
+- `Bilibili.Radio_<版本>_x64-setup.exe`（上传前统一采用点号，确保与校验清单中的名称一致）
 - `SHA256SUMS.txt`
 - `build-info.json`
 
@@ -78,16 +78,16 @@ npm、pip 和 Rust 依赖启用缓存。Rust 构建缓存只允许 main 的 push
 
 ## 首次启用与发布
 
-工作流已随 `cc76d59` 推送到 `develop/restore-main-0828`，首次云端运行成功；尚未合并 main 或发布版本标签。建议先合并至 main，确认分支 CI 成功，再发布版本标签。若仓库组织策略限制了 Actions 或 GITHUB_TOKEN 写权限，需要在仓库/组织设置中允许这些操作。
+工作流最初随 `cc76d59` 推送到 `develop/restore-main-0828`。当前已将验证通过的 `2f19d17` 标记为 v0.2.0 并正式发布，尚未合并 main。标签可指向已验证的功能分支提交；后续仍建议合并 main 后再发布。若仓库组织策略限制了 Actions 或 GITHUB_TOKEN 写权限，需要在仓库/组织设置中允许这些操作。
 
-当前源码版本是 0.2.0。确认目标提交已推送且通过 CI 后，可用以下命令发布该版本；以后发布 0.2.1 时，先同步修改三个版本位置并提交，再使用 v0.2.1 标签。
+当前已发布 0.2.0。以后发布 0.2.1 时，先同步修改三个版本位置并提交，确认目标提交已推送且通过 CI，再使用以下命令：
 
 ```powershell
-git tag -a v0.2.0 -m "Bilibili Radio v0.2.0"
-git push bilibili-radio v0.2.0
+git tag -a v0.2.1 -m "Bilibili Radio v0.2.1"
+git push bilibili-radio v0.2.1
 ```
 
-这两条命令仅为发布说明，本次未执行，未创建标签或 Release。
+这两条 v0.2.1 命令仅为后续发布示例，尚未执行。本轮实际创建了 v0.2.0 标签与 Release，见 [交付记录](desktop-0.2.0-install-and-release-2026-09-29.md)。
 
 ## 本地检查
 

@@ -80,4 +80,6 @@ SHA-256：`4a1a86f62552473708a00d2d08dc32057c83d420858ec1c9ce741d4a3f478ea9`。
 
 [GitHub Actions 本轮运行](https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36572707174)全部通过：Windows、Ubuntu 自动测试与前端构建，以及 Windows 完整安装包、原生窗口规则测试、打包后端存活和数据库就绪检查。云端 [windows-x64-installer 产物](https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36572707174/artifacts/11035133444)为 21,079,114 字节，内含安装包、SHA256SUMS.txt 和 build-info.json；云端与本地构建环境不同，校验云端包时使用产物内部的校验文件。
 
-未创建版本标签、未发布 Release、未合并 main。Release 任务因普通分支推送按规则跳过。后续仅补齐本报告及证据的文档提交使用 [skip ci]，功能源码与通过云端检查的提交一致。
+实现验收当时未创建版本标签、未发布 Release、未合并 main，Release 任务因普通分支推送按规则跳过。随后仅补齐本报告及证据的文档提交使用 [skip ci]，功能源码与通过云端检查的提交一致。
+
+后续用户已要求安装并正式发布：本机现已替换为 0.2.0，v0.2.0 Release 已公开；详情见 [本机替换与正式发布记录](desktop-0.2.0-install-and-release-2026-09-29.md)。
