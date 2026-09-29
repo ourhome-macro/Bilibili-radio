@@ -15,6 +15,18 @@
 
 版本更新为 0.2.0，仍采用无签名安装包和 v* 标签发布策略。本次不会自动创建发布标签或安装覆盖用户现有版本。
 
+## 根因与修复位置
+
+| 问题 | 原因与本次修复 | 主要源码 |
+| --- | --- | --- |
+| 同一集重新从头 | 旧逻辑只在达到历史阈值时写一次，续播还读取另一张表；新增独立检查点，按实际音频时间保存，恢复完成后才播放 | [playback_progress.py](../py-radio/playback_progress.py)、[playbackProgress.ts](../bilibili-player/src/audio/playbackProgress.ts)、[playerStore.ts](../bilibili-player/src/stores/playerStore.ts)、[StreamingAudioPlayer.ts](../bilibili-player/src/audio/StreamingAudioPlayer.ts) |
+| 上一曲要点两次 | prev() 原先超过 3 秒就 seek(0) 并返回；取消该分支，各入口共用 prev() | [playerStore.ts](../bilibili-player/src/stores/playerStore.ts) |
+| 后台快捷键无效 | 原先没有原生全局注册；新增全局快捷键，通过主窗口控制桥调用同一播放器 | [desktop_controls.rs](../bilibili-player/src-tauri/src/desktop_controls.rs)、[DesktopControlBridge.vue](../bilibili-player/src/components/DesktopControlBridge.vue) |
+| 关闭后后台残留 | 主窗口关闭与歌词 WebView/后端退出并不等价；新增托盘生命周期、退出保存握手和进程树清理 | [main.rs](../bilibili-player/src-tauri/src/main.rs)、[backend_job.rs](../bilibili-player/src-tauri/src/backend_job.rs) |
+| 多点出现多实例 | 原先启动入口没有互斥；Windows 在任何窗口和后端创建之前阻止第二实例并通知原窗口恢复 | [startup_gate.rs](../bilibili-player/src-tauri/src/startup_gate.rs) |
+| 窗口位置乱跳 | 主窗口未保存，歌词每次显示又覆盖为默认位置；分别保存，主窗口另外保留最大化前的正常矩形 | [window_geometry.rs](../bilibili-player/src-tauri/src/window_geometry.rs)、[main.rs](../bilibili-player/src-tauri/src/main.rs) |
+| 列表找不到当前项 | 只有高亮，缺少滚动与解除筛选入口；以稳定曲目标识定位，允许用户停止自动跟随 | [QueueDrawer.vue](../bilibili-player/src/components/layout/QueueDrawer.vue)、[PlaylistDetailView.vue](../bilibili-player/src/views/PlaylistDetailView.vue) |
+
 ## 技术范围
 
 - 新增 playback_progress 表以及 playback_sessions 的顺序/计数字段；兼容读取旧 recent 和 playback_recent 历史。
@@ -37,6 +49,8 @@
 - 原生实测：托盘菜单退出完成 quit 进度保存并清理后端；仅强制结束桌面主进程也会自动清理后端进程树。
 
 公开验证证据见 [evidence-desktop-implementation-2026-09-29](evidence-desktop-implementation-2026-09-29/)。原生界面实测在本机 Windows 执行；GitHub runner 执行自动测试与构建，不等同于实际 GUI 交互。DPI 换算和显示器缺失覆盖了单元测试，未实际更换显示器或多 DPI 硬件。
+
+本地完整安装包使用现有 Python 3.10.11 打包环境、Node 24.13 和 Rust 1.97.1；云端固定使用 Python 3.12、Node 24 和 Rust 1.97.1。无签名包经 Get-AuthenticodeSignature 确认为 NotSigned。
 
 ## 真实安装数据验证
 
@@ -62,4 +76,8 @@
 
 SHA-256：`4a1a86f62552473708a00d2d08dc32057c83d420858ec1c9ce741d4a3f478ea9`。
 
-功能代码将提交至 `develop/restore-main-0828`，云端检查结果完成后补入本节。未创建版本标签、未发布 Release、未合并 main。
+功能代码已随 `2f19d17f415e74cd6129aeac2e72efb221ea7eae` 推送至 `develop/restore-main-0828`。
+
+[GitHub Actions 本轮运行](https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36572707174)全部通过：Windows、Ubuntu 自动测试与前端构建，以及 Windows 完整安装包、原生窗口规则测试、打包后端存活和数据库就绪检查。云端 [windows-x64-installer 产物](https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36572707174/artifacts/11035133444)为 21,079,114 字节，内含安装包、SHA256SUMS.txt 和 build-info.json；云端与本地构建环境不同，校验云端包时使用产物内部的校验文件。
+
+未创建版本标签、未发布 Release、未合并 main。Release 任务因普通分支推送按规则跳过。后续仅补齐本报告及证据的文档提交使用 [skip ci]，功能源码与通过云端检查的提交一致。

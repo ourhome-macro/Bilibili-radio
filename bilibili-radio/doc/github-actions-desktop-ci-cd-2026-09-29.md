@@ -134,7 +134,7 @@ py -3.12 scripts/smoke_desktop_backend.py py-radio/dist/bilibili-radio-backend.e
 
 当前按用户选择发布无签名包。Windows 可能显示未知发布者或 SmartScreen 提示，受管理的设备也可能禁止运行；不能保证所有电脑都允许继续安装。[微软说明](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation)。此流程也不等于应用内自动更新。
 
-0.2.0 增量验证记录和本地安装包信息见 [桌面播放体验实现与验证](desktop-playback-tray-implementation-2026-09-29.md)。以上 95 项测试和 0.1.4 包是首次接入时的历史结果。
+0.2.0 的 [云端运行 36572707174](https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36572707174)也已全部通过，代码提交为 2f19d17；Release 按分支推送规则跳过。增量验证记录和本地安装包信息见 [桌面播放体验实现与验证](desktop-playback-tray-implementation-2026-09-29.md)。以上 95 项测试和 0.1.4 包是首次接入时的历史结果。
 
 ## 官方参考
 

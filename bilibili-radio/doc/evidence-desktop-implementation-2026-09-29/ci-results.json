@@ -1,0 +1,31 @@
+{
+  "sourceCommit": "2f19d17f415e74cd6129aeac2e72efb221ea7eae",
+  "branch": "develop/restore-main-0828",
+  "url": "https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36572707174",
+  "jobs": [
+    {
+      "name": "Tests (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "name": "Tests (ubuntu-24.04)",
+      "conclusion": "success"
+    },
+    {
+      "name": "Windows installer",
+      "conclusion": "success"
+    },
+    {
+      "name": "Publish GitHub Release",
+      "conclusion": "skipped"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11035133444,
+      "name": "windows-x64-installer",
+      "sizeBytes": 21079114,
+      "expired": false
+    }
+  ]
+}
