@@ -1,0 +1,55 @@
+{
+  "before": {
+    "schema": 9,
+    "tracks": 1902,
+    "counts": {
+      "likes": 47,
+      "playlists": 1,
+      "playlist_items": 7,
+      "player_queue_items": 105,
+      "track_reviews": 5,
+      "analysis_events": 7,
+      "recent": 114
+    }
+  },
+  "afterMigration": {
+    "schema": 10,
+    "tracks": 1902,
+    "counts": {
+      "likes": 47,
+      "playlists": 1,
+      "playlist_items": 7,
+      "player_queue_items": 105,
+      "track_reviews": 5,
+      "analysis_events": 7,
+      "recent": 114
+    }
+  },
+  "immediateCleanup": {
+    "playback_progress": 0,
+    "recommendation_history": 370,
+    "recommendation_events": 1698,
+    "recent_pointers": 107,
+    "playback_recent_pointers": 0,
+    "playback_sessions_pointers": 0,
+    "playback_events_pointers": 0,
+    "tracks": 0,
+    "complete": true
+  },
+  "simulatedDay31Cleanup": {
+    "playback_progress": 9,
+    "recommendation_history": 160,
+    "recommendation_events": 160,
+    "recent_pointers": 1,
+    "playback_recent_pointers": 1,
+    "playback_sessions_pointers": 21,
+    "playback_events_pointers": 30,
+    "tracks": 1639,
+    "complete": true
+  },
+  "remainingTracks": 263,
+  "personalTablesUnchanged": true,
+  "quickCheck": "ok",
+  "foreignKeyViolations": 0,
+  "feedbackRows": 251
+}

@@ -47,5 +47,28 @@
       "state": "uploaded",
       "digest": "sha256:5f6b727d56c10028e2fed29f8dc9e973aaf899eee8ad41c8eafe819334528bc1"
     }
-  ]
+  ],
+  "assetNamingFix": {
+    "commit": "df7b6201291c8d586324cf67abc4e456ca994e75",
+    "branchCI": "https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36576067266",
+    "prCI": "https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36576073357",
+    "bothPassed": true,
+    "artifactVerification": {
+      "runId": 36576067266,
+      "artifactId": 11037418109,
+      "files": [
+        "Bilibili.Radio_0.2.0_x64-setup.exe",
+        "build-info.json",
+        "SHA256SUMS.txt"
+      ],
+      "manifestNameMatches": true,
+      "sha256Verified": true,
+      "buildInfo": {
+        "commit": "df7b6201291c8d586324cf67abc4e456ca994e75",
+        "platform": "windows-x64",
+        "signed": false,
+        "version": "0.2.0"
+      }
+    }
+  }
 }

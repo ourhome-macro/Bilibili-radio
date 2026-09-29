@@ -1,0 +1,14 @@
+{
+  "installedMaintenanceCompleted": true,
+  "result": {
+    "playback_progress": 0,
+    "recommendation_history": 370,
+    "recommendation_events": 1698,
+    "recent_pointers": 107,
+    "playback_recent_pointers": 0,
+    "playback_sessions_pointers": 0,
+    "playback_events_pointers": 0,
+    "tracks": 0,
+    "complete": true
+  }
+}

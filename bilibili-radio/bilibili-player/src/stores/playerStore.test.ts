@@ -45,7 +45,7 @@ beforeEach(async () => {
   vi.useFakeTimers()
   localStorage.clear()
   setActivePinia(createPinia())
-  mocks.api.resume.mockReset().mockImplementation(async (id) => ({ trackId: id, positionMs: 45000, listenMs: 0, completed: false }))
+  mocks.api.resume.mockReset().mockImplementation(async (id) => ({ trackId: id, positionMs: 45000, listenMs: 0, completed: false, lastActiveAtMs: Date.now() }))
   mocks.api.save.mockReset().mockResolvedValue({ accepted: true })
   mocks.api.stream.mockReset().mockImplementation(async (_bvid, cid) => ({ cid, duration: 600, url: `https://fixture/${cid}` }))
   mocks.audio.load.mockReset().mockImplementation((_info, position) => { mocks.audio.time = position })
@@ -146,5 +146,40 @@ describe('player control and resume integration', () => {
     mocks.audio.time = 123
     await player.prepareForExit()
     expect(mocks.api.save).toHaveBeenLastCalledWith(expect.objectContaining({ event: 'quit', positionMs: 123000 }))
+  })
+
+  it('does not refresh paused progress through heartbeats or quitting', async () => {
+    player.playAt(0); await settle(); mocks.audio.onReady?.()
+    mocks.audio.onTime?.(134, 600)
+    player.pause(); await settle()
+    const activity = mocks.api.save.mock.calls.at(-1)?.[0].lastActiveAtMs
+    const requests = mocks.api.save.mock.calls.length
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(mocks.api.save).toHaveBeenCalledTimes(requests)
+    await player.prepareForExit()
+    expect(mocks.api.save).toHaveBeenLastCalledWith(expect.objectContaining({ lastActiveAtMs: activity, positionMs: 134000 }))
+  })
+
+  it('rechecks expiry when resuming an already loaded player after a day', async () => {
+    player.playAt(0); await settle(); mocks.audio.onReady?.()
+    mocks.audio.onTime?.(134, 600)
+    player.pause(); await settle()
+    const saved = mocks.api.save.mock.calls.at(-1)?.[0]
+    vi.setSystemTime(Date.now() + 86_400_001)
+    mocks.api.resume.mockResolvedValue(saved) // even an old remote response cannot resurrect it
+    player.resume(); await settle()
+    expect(mocks.audio.load).toHaveBeenLastCalledWith(expect.anything(), 0)
+  })
+
+  it('actively replaying updates both the newest pointer and its deadline', async () => {
+    player.playAt(0); await settle(); mocks.audio.onReady?.()
+    mocks.audio.onTime?.(134, 600)
+    player.pause(); await settle()
+    const previous = mocks.api.save.mock.calls.at(-1)?.[0].lastActiveAtMs
+    vi.setSystemTime(Date.now() + 3600_000)
+    player.resume(); mocks.audio.onTime?.(261, 600); player.pause(); await settle()
+    const latest = mocks.api.save.mock.calls.at(-1)?.[0]
+    expect(latest.positionMs).toBe(261000)
+    expect(latest.lastActiveAtMs).toBeGreaterThan(previous)
   })
 })

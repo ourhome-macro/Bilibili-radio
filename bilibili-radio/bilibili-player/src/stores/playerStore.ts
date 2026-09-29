@@ -28,7 +28,7 @@ import {
 import { streamingAudioPlayer } from '@/audio/StreamingAudioPlayer'
 import { useLibraryStore } from '@/stores/libraryStore'
 import { useAuthStore } from '@/stores/authStore'
-import { ProgressOutbox, playbackTrackId, newerResume, resumeSeconds, type ProgressEvent, type ResumePoint } from '@/audio/playbackProgress'
+import { ProgressOutbox, playbackTrackId, newerResume, resumeSeconds, PROGRESS_TTL_MS, type ProgressEvent, type ResumePoint } from '@/audio/playbackProgress'
 
 const PLAY_MODES: PlayMode[] = ['order', 'loop', 'single', 'shuffle']
 const AUDIO_QUALITIES: AudioQualityPreference[] = ['auto', '64k', '132k', '192k', 'dolby', 'hires']
@@ -122,7 +122,7 @@ export const usePlayerStore = defineStore('player', () => {
   const progressSyncError = ref<string | null>(null)
   const auth = useAuthStore()
   const progressOutboxes = new Map<string, ProgressOutbox>()
-  let progressSession: { track: Track; owner: string; id: string; started: number; seq: number; ready: boolean } | null = null
+  let progressSession: { track: Track; owner: string; id: string; started: number; seq: number; ready: boolean; lastActive: number; lastPosition: number } | null = null
   let progressTimer: ReturnType<typeof setInterval> | null = null
   let lastSessionStarted = 0
 
@@ -177,13 +177,21 @@ export const usePlayerStore = defineStore('player', () => {
   async function flushProgress(event: ProgressEvent['event'] = 'heartbeat'): Promise<void> {
     const session = progressSession
     let cached = true
-    if (session?.ready) {
+    const position = streamingAudioPlayer.getCurrentTime()
+    if (session?.ready && status.value === 'playing' && position !== session.lastPosition) {
+      session.lastActive = Date.now()
+      session.lastPosition = position
+    }
+    // Retrying an outbox, minimizing, quitting or staying paused is not playback activity.
+    if (session?.ready && session.lastActive > Date.now() - PROGRESS_TTL_MS
+      && (event !== 'heartbeat' || status.value === 'playing')) {
       const snapshot: ProgressEvent = {
         trackId: playbackTrackId(session.track), track: session.track,
         sessionId: session.id, sessionStartedAtMs: session.started, eventSeq: ++session.seq,
-        positionMs: Math.max(0, Math.round(streamingAudioPlayer.getCurrentTime() * 1000)),
+        positionMs: Math.max(0, Math.round(position * 1000)),
         listenMs: Math.max(0, Math.round(playbackListenSeconds * 1000)),
-        completed: event === 'ended', event, lastPlayedAt: new Date().toISOString(),
+        completed: event === 'ended', event, lastPlayedAt: new Date(session.lastActive).toISOString(),
+        lastActiveAtMs: session.lastActive, expiresAtMs: session.lastActive + PROGRESS_TTL_MS,
       }
       if (session.owner === progressOwner()) {
         useLibraryStore().updateRecentProgress(session.track, snapshot.positionMs, snapshot.completed)
@@ -373,6 +381,7 @@ export const usePlayerStore = defineStore('player', () => {
     streamingAudioPlayer.onStateChange((playing) => {
       if (playing) {
         status.value = 'playing'
+        if (progressSession?.ready) progressSession.lastActive = Date.now()
       } else {
         if (status.value === 'playing') {
           status.value = 'paused'
@@ -381,6 +390,10 @@ export const usePlayerStore = defineStore('player', () => {
     })
 
     streamingAudioPlayer.onTimeUpdate((time, dur) => {
+      if (progressSession?.ready && status.value === 'playing' && time !== progressSession.lastPosition) {
+        progressSession.lastActive = Date.now()
+        progressSession.lastPosition = time
+      }
       accumulatePlaybackListenTime(time)
       currentTime.value = time
       if (dur > 0 && dur !== duration.value) {
@@ -507,7 +520,8 @@ export const usePlayerStore = defineStore('player', () => {
       const initialPosition = resumeSeconds(point, playableTrack.duration)
       lastSessionStarted = Math.max(Date.now(), lastSessionStarted + 1, (point?.sessionStartedAtMs ?? 0) + 1)
       progressSession = { track: { ...playableTrack }, owner: progressOwner(),
-        id: crypto.randomUUID(), started: lastSessionStarted, seq: 0, ready: false }
+        id: crypto.randomUUID(), started: lastSessionStarted, seq: 0, ready: false,
+        lastActive: 0, lastPosition: initialPosition }
       syncQueueCurrentTrack(playableTrack)
       videoInfo.value = trackToVideoInfo(playableTrack)
       duration.value = playableTrack.duration
@@ -815,7 +829,7 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function resume() {
-    if (!progressSession?.ready) {
+    if (!progressSession?.ready || progressSession.lastActive <= Date.now() - PROGRESS_TTL_MS) {
       if (currentTrack.value) void requestPlayTrack(currentTrack.value)
       return
     }

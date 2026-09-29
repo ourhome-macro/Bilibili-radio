@@ -1,0 +1,20 @@
+{
+  "schema": 10,
+  "initialPointerMs": 134000,
+  "latestPointerMs": 261000,
+  "passiveQuitDidNotRenew": true,
+  "expiredResumeMs": 0,
+  "backgroundMaintenanceRan": true,
+  "maintenance": {
+    "playback_progress": 1,
+    "recommendation_history": 370,
+    "recommendation_events": 1698,
+    "recent_pointers": 107,
+    "playback_recent_pointers": 0,
+    "playback_sessions_pointers": 1,
+    "playback_events_pointers": 0,
+    "tracks": 0,
+    "complete": true
+  },
+  "isolatedRealDatabaseCopy": true
+}

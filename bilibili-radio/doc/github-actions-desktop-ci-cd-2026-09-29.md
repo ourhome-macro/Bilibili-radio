@@ -30,10 +30,10 @@ npm、pip 和 Rust 依赖启用缓存。Rust 构建缓存只允许 main 的 push
 测试任务分别运行在 Ubuntu 24.04 和 Windows Server 2022：
 
 - 安装固定直接版本的 Python 依赖。
-- 执行 107 项后端测试，包括字幕来源约束、缓存并发、身份与权限、会话与 CSRF、曲库、播放、推荐、下载基础行为、数据隔离、数据库迁移及续播/事件幂等性。
+- 执行 119 项后端测试，包括字幕来源约束、缓存并发、身份与权限、会话与 CSRF、曲库、播放、推荐、下载基础行为、数据隔离、数据库迁移、续播/事件幂等性及数据保留规则。
 - 执行 6 项发布版本规则测试，验证标签不匹配、Cargo 清单或锁文件未同步等情况会失败。
 - 校验 Tauri、Cargo.toml、Cargo.lock 的桌面版本一致。
-- 使用 npm ci 安装前端依赖，执行 TypeScript/Vue 类型检查、Vite 生产构建及 21 项 Vitest 播放器/组件回归。
+- 使用 npm ci 安装前端依赖，执行 TypeScript/Vue 类型检查、Vite 生产构建及 27 项 Vitest 播放器/组件回归。
 
 所有测试通过后，在 Windows Server 2022 上：
 
@@ -80,14 +80,14 @@ npm、pip 和 Rust 依赖启用缓存。Rust 构建缓存只允许 main 的 push
 
 工作流最初随 `cc76d59` 推送到 `develop/restore-main-0828`。当前已将验证通过的 `2f19d17` 标记为 v0.2.0 并正式发布，尚未合并 main。标签可指向已验证的功能分支提交；后续仍建议合并 main 后再发布。若仓库组织策略限制了 Actions 或 GITHUB_TOKEN 写权限，需要在仓库/组织设置中允许这些操作。
 
-当前已发布 0.2.0。以后发布 0.2.1 时，先同步修改三个版本位置并提交，确认目标提交已推送且通过 CI，再使用以下命令：
+当前已发布 0.2.1。以后发布 0.2.2 时，先同步修改三个版本位置并提交，确认目标提交已推送且通过 CI，再使用以下命令：
 
 ```powershell
-git tag -a v0.2.1 -m "Bilibili Radio v0.2.1"
-git push bilibili-radio v0.2.1
+git tag -a v0.2.2 -m "Bilibili Radio v0.2.2"
+git push bilibili-radio v0.2.2
 ```
 
-这两条 v0.2.1 命令仅为后续发布示例，尚未执行。本轮实际创建了 v0.2.0 标签与 Release，见 [交付记录](desktop-0.2.0-install-and-release-2026-09-29.md)。
+这两条 v0.2.2 命令仅为后续发布示例，尚未执行。v0.2.0、v0.2.1 均已通过标签流水线正式发布，见 [最新交付记录](metadata-retention-and-progress-0.2.1-2026-09-29.md)。
 
 ## 本地检查
 
@@ -101,7 +101,7 @@ python scripts/run_backend_tests.py
 
 ```powershell
 py -3.12 -m unittest discover -s scripts/tests -v
-py -3.12 scripts/check_desktop_version.py --tag v0.2.0
+py -3.12 scripts/check_desktop_version.py --tag v0.2.1
 ```
 
 在 bilibili-player 目录：

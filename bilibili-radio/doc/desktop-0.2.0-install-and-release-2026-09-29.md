@@ -35,7 +35,9 @@
 
 本次只纠正了 Release 的校验清单，安装包、构建信息、标签和业务源码未更改；旧清单已保存到本机备份。重新下载公开的 SHA256SUMS.txt，已确认它引用真实附件名且哈希与下载后的文件一致。
 
-工作流现已在生成校验文件之前将发布产物命名为 `Bilibili.Radio_<版本>_x64-setup.exe`，避免后续版本重现该问题。actionlint 检查通过；修正工作流的分支 CI 另行验证，不重新发布或覆盖 v0.2.0 安装包。
+工作流现已在生成校验文件之前将发布产物命名为 `Bilibili.Radio_<版本>_x64-setup.exe`，避免后续版本重现该问题。修正提交为 `df7b6201291c8d586324cf67abc4e456ca994e75`，actionlint、[分支 CI](https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36576067266)和 [PR CI](https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36576073357)均通过。
+
+已实际下载该分支的 windows-x64-installer 产物（artifact 11037418109），确认三个附件完整，SHA256SUMS.txt 引用真实安装包文件名且哈希相符，build-info.json 对应 df7b620。验证未重新发布或覆盖 v0.2.0 安装包。结构化结果见 [交付证据](evidence-desktop-implementation-2026-09-29/release-results.json)。
 
 仍为无代码签名的 Windows x64 安装包，未配置服务器部署或应用内自动更新。本机安装和 GitHub Release 发布是两项独立操作。
 

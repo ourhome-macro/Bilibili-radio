@@ -4,6 +4,8 @@
 
 0.2.0 增加持续保存播放进度、后台快捷键、系统托盘、双窗口位置记忆和当前曲目定位。重复启动会唤起已有窗口；上一曲点击一次即切换。实现及测试记录见 [桌面体验验证报告](doc/desktop-playback-tray-implementation-2026-09-29.md)。
 
+0.2.1 将续播位置保留期设为最后实际播放后的 24 小时，暂停和重新打开软件不延长期限；推荐只保存选中结果，后台自动回收过期展示记录和无关联元数据。收藏、歌单、队列与收听统计保留，见 [生命周期与验证说明](doc/metadata-retention-and-progress-0.2.1-2026-09-29.md)。
+
 ## 桌面操作
 
 - `Ctrl+Alt+Space`：播放/暂停；`Ctrl+Alt+←`：上一曲；`Ctrl+Alt+→`：下一曲，后台或托盘中均可用。
@@ -15,7 +17,7 @@
 
 安装包通过 [GitHub Releases](https://github.com/ourhome-macro/Bilibili-radio/releases) 分发。当前采用无代码签名的 Windows x64 NSIS 安装包，Windows 可能显示未知发布者或 SmartScreen 提示。
 
-当前正式版：[v0.2.0](https://github.com/ourhome-macro/Bilibili-radio/releases/tag/v0.2.0)。发布与本机升级记录见 [0.2.0 交付记录](doc/desktop-0.2.0-install-and-release-2026-09-29.md)。
+当前正式版：[v0.2.1](https://github.com/ourhome-macro/Bilibili-radio/releases/tag/v0.2.1)。发布与本机升级记录见 [0.2.1 交付记录](doc/metadata-retention-and-progress-0.2.1-2026-09-29.md)。
 
 GitHub Actions 在提交和 PR 时执行自动测试与构建验证；只在推送与桌面版本一致的 `v*` 标签时发布 Release，没有定时发布。详见 [CI/CD 说明](doc/github-actions-desktop-ci-cd-2026-09-29.md)。
 
