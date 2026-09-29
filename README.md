@@ -4,6 +4,8 @@
 
 它可以将 B 站视频、多 P 视频、收藏夹和用户自建歌单统一整理成可播放的音乐曲目集合，并提供播放队列、我喜欢、UP 主主页、悬浮歌词和规则推荐等功能。
 
+构建与测试入口见 [项目说明](bilibili-radio/README.md)，当前配置与历史记录见 [文档索引](bilibili-radio/doc/README.md)。GitHub Actions 自动测试和验证 Windows 安装包；仅推送匹配版本的 `v*` 标签时发布无签名安装包到 Release。
+
 ## Features
 
 * 搜索 B 站视频并播放音频
