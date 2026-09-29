@@ -9,6 +9,7 @@ from typing import Any, Optional
 from database import DEFAULT_DB_PATH, LEGACY_OWNER_USER_ID, get_connection, init_db
 from error_code import APIError
 from models import Track, make_track_id, normalize_bvid
+from retention import touch_tracks, now_ms, PROGRESS_TTL_MS
 
 
 _TRACK_UPSERT_SQL = """
@@ -49,14 +50,15 @@ class LibraryService:
         self.user_id = user_id
         init_db(self.db_path)
 
-    def upsert_track(self, track: Track, raw: Optional[dict[str, Any]] = None) -> Track:
+    def upsert_track(self, track: Track, raw: Optional[dict[str, Any]] = None, *, origin: str = 'library') -> Track:
         self._validate_track(track)
         now = utc_now()
         with get_connection(self.db_path) as conn:
             conn.execute(_TRACK_UPSERT_SQL, self._track_upsert_values(track, raw, now))
+            touch_tracks(conn, [track.track_id], origin)
         return track
 
-    def upsert_tracks(self, tracks: list[Track]) -> list[Track]:
+    def upsert_tracks(self, tracks: list[Track], *, origin: str = 'library') -> list[Track]:
         if not tracks:
             return []
         for track in tracks:
@@ -67,6 +69,7 @@ class LibraryService:
                 _TRACK_UPSERT_SQL,
                 [self._track_upsert_values(track, None, now) for track in tracks],
             )
+            touch_tracks(conn, [track.track_id for track in tracks], origin)
         return tracks
 
     def get_track(self, track_id: str) -> Optional[Track]:
@@ -87,7 +90,9 @@ class LibraryService:
             rows = conn.execute(
                 """
                 SELECT t.*, r.last_played_at, r.play_count AS recent_play_count,
-                       COALESCE(p.position_ms, r.position_ms) AS position_ms,
+                       CASE WHEN p.last_active_ms > ? THEN p.position_ms
+                            WHEN CAST((julianday(r.last_played_at)-2440587.5)*86400000 AS INTEGER) > ?
+                            THEN r.position_ms ELSE 0 END AS position_ms,
                        r.listen_ms, COALESCE(p.completed, r.completed) AS completed
                 FROM recent r
                 JOIN tracks t ON t.track_id = r.track_id
@@ -96,7 +101,7 @@ class LibraryService:
                 ORDER BY r.last_played_at DESC
                 LIMIT ?
                 """,
-                (self.user_id, limit),
+                (now_ms()-PROGRESS_TTL_MS, now_ms()-PROGRESS_TTL_MS, self.user_id, limit),
             ).fetchall()
         return [self._track_payload_with_meta(row) for row in rows]
 
@@ -501,6 +506,7 @@ class LibraryService:
                 _TRACK_UPSERT_SQL,
                 [self._track_upsert_values(track, None, now) for track in normalized],
             )
+            touch_tracks(conn, [track.track_id for track in normalized], 'playlist')
             conn.execute(
                 "DELETE FROM playlist_items WHERE user_id = ? AND playlist_id = ?",
                 (self.user_id, playlist_id),
@@ -621,6 +627,7 @@ class LibraryService:
                     _TRACK_UPSERT_SQL,
                     [self._track_upsert_values(track, None, now) for track in to_add],
                 )
+                touch_tracks(conn, [track.track_id for track in to_add], 'playlist')
                 conn.executemany(
                     """
                     INSERT INTO playlist_items (

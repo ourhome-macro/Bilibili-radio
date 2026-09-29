@@ -450,7 +450,7 @@ def proxy_image():
 @app.get("/api/tracks/<bvid>")
 def get_track_detail(bvid: str):
     detail = bili_client.get_video_detail(bvid)
-    library_service.upsert_tracks(detail.pages)
+    library_service.upsert_tracks(detail.pages, origin='detail')
     return Result.ok(detail.to_dict()).json()
 
 
@@ -513,7 +513,7 @@ def resolve_track_input():
     if not bvid:
         raise APIError.invalid_input("Cannot parse BVID from input")
     detail = bili_client.get_video_detail(bvid)
-    library_service.upsert_tracks(detail.pages)
+    library_service.upsert_tracks(detail.pages, origin='resolve')
     return Result.ok(detail.to_dict()).json()
 
 

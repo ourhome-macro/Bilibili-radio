@@ -181,7 +181,6 @@ class RecommendationService:
             for track in self._local_fallback_tracks():
                 self._add_candidate(candidates, track, "library")
 
-        self._upsert_draft_tracks(candidates.values())
         return candidates
 
     def _score_candidate(self, draft: CandidateDraft, profile: UserProfile) -> RecommendationCandidate:
@@ -422,7 +421,7 @@ class RecommendationService:
                     SELECT track_id FROM playback_recent
                     WHERE user_id = ? AND skipped = 1
                     UNION
-                    SELECT track_id FROM recommendation_history
+                    SELECT track_id FROM recommendation_feedback
                     WHERE user_id = ? AND skipped = 1
                     UNION
                     SELECT track_id FROM recommendation_events
@@ -518,11 +517,6 @@ class RecommendationService:
         if tag:
             draft.tags.add(tag)
 
-    def _upsert_draft_tracks(self, drafts: Any) -> None:
-        tracks = [draft.track for draft in drafts]
-        if tracks:
-            self.library.upsert_tracks(tracks)
-
     def _upsert_candidate_tracks(self, candidates: list[RecommendationCandidate]) -> None:
         tracks = []
         for candidate in candidates:
@@ -531,7 +525,7 @@ class RecommendationService:
             except Exception:
                 continue
         if tracks:
-            self.library.upsert_tracks(tracks)
+            self.library.upsert_tracks(tracks, origin='recommendation')
 
     def _track_exists(self, track_id: str) -> bool:
         with get_connection(self.db_path) as conn:
@@ -559,60 +553,18 @@ class RecommendationService:
             )
             return
 
-        latest = conn.execute(
-            """
-            SELECT id FROM recommendation_history
-            WHERE user_id = ? AND track_id = ?
-            ORDER BY recommended_at DESC
-            LIMIT 1
-            """,
-            (self.user_id, item["trackId"]),
-        ).fetchone()
-        if latest:
-            conn.execute(
-                """
-                UPDATE recommendation_history
-                SET clicked = MAX(clicked, ?),
-                    played_seconds = MAX(played_seconds, ?),
-                    completed = MAX(completed, ?),
-                    liked = MAX(liked, ?),
-                    skipped = MAX(skipped, ?)
-                WHERE id = ?
-                """,
-                (
-                    int(item["event"] in {"played", "accepted", "completed"}),
-                    item["playedSeconds"],
-                    int(item["completed"]),
-                    int(item["liked"]),
-                    int(item["skipped"]),
-                    latest["id"],
-                ),
-            )
-            return
-
-        conn.execute(
-            """
-            INSERT INTO recommendation_history (
-                user_id, track_id, recommended_at, clicked, played_seconds,
-                completed, liked, skipped, scene, source, score, reason
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                self.user_id,
-                item["trackId"],
-                item["createdAt"],
-                int(item["event"] in {"played", "accepted", "completed"}),
-                item["playedSeconds"],
-                int(item["completed"]),
-                int(item["liked"]),
-                int(item["skipped"]),
-                item["scene"],
-                item["source"],
-                item["score"],
-                item["reason"],
-            ),
-        )
+        conn.execute("""INSERT INTO recommendation_feedback
+            (user_id,track_id,clicked,played_seconds,completed,liked,skipped,updated_at)
+            VALUES (?,?,?,?,?,?,?,?)
+            ON CONFLICT(user_id,track_id) DO UPDATE SET
+                clicked=MAX(recommendation_feedback.clicked,excluded.clicked),
+                played_seconds=MAX(recommendation_feedback.played_seconds,excluded.played_seconds),
+                completed=MAX(recommendation_feedback.completed,excluded.completed),
+                liked=MAX(recommendation_feedback.liked,excluded.liked),
+                skipped=MAX(recommendation_feedback.skipped,excluded.skipped),
+                updated_at=excluded.updated_at""",
+            (self.user_id,item['trackId'],int(item['event'] in {'played','accepted','completed'}),
+             item['playedSeconds'],int(item['completed']),int(item['liked']),int(item['skipped']),item['createdAt']))
 
     @staticmethod
     def _primary_source(sources: set[str]) -> str:

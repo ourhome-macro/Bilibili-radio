@@ -96,5 +96,5 @@ class PlaybackProgressTests(unittest.TestCase):
     def test_schema_is_v9_with_foreign_keys_intact(self):
         self.send()
         with get_connection(self.db) as conn:
-            self.assertEqual(conn.execute('PRAGMA user_version').fetchone()[0], 9)
+            self.assertEqual(conn.execute('PRAGMA user_version').fetchone()[0], 10)
             self.assertEqual(conn.execute('PRAGMA foreign_key_check').fetchall(), [])

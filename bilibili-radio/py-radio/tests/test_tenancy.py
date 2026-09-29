@@ -116,7 +116,7 @@ class TenantIsolationTests(unittest.TestCase):
             version = conn.execute("PRAGMA user_version").fetchone()[0]
             violations = conn.execute("PRAGMA foreign_key_check").fetchall()
 
-        self.assertEqual(version, 9)
+        self.assertEqual(version, 10)
         self.assertEqual(owner["role"], "admin")
         self.assertEqual(owner["role_source"], "bootstrap")
         self.assertEqual(violations, [])

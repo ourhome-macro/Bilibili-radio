@@ -500,7 +500,7 @@ class RecommendationServiceTests(unittest.TestCase):
         with get_connection(self.db_path) as conn:
             row = conn.execute("SELECT event, scene FROM recommendation_events").fetchone()
             history = conn.execute(
-                "SELECT skipped FROM recommendation_history WHERE track_id = ?",
+                "SELECT skipped FROM recommendation_feedback WHERE track_id = ?",
                 (self.high_signal.track_id,),
             ).fetchone()
 

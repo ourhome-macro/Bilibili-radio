@@ -6,6 +6,7 @@ from typing import Any, Optional
 from database import DEFAULT_DB_PATH, LEGACY_OWNER_USER_ID, get_connection, init_db
 from library_service import LibraryService
 from playback_progress import read_progress, record_progress
+from retention import now_ms, PROGRESS_TTL_MS
 
 
 RECENT_RECORD_RATIO = 0.1
@@ -31,7 +32,9 @@ class PlaybackService:
         with get_connection(self.db_path) as conn:
             rows = conn.execute(
                 """
-                SELECT t.*, pr.last_played_at, pr.position_ms, pr.listen_ms,
+                SELECT t.*, pr.last_played_at,
+                       CASE WHEN CAST((julianday(pr.last_played_at)-2440587.5)*86400000 AS INTEGER) > ?
+                       THEN pr.position_ms ELSE 0 END AS position_ms, pr.listen_ms,
                        pr.completed, pr.skipped
                 FROM playback_recent pr
                 JOIN tracks t ON t.track_id = pr.track_id
@@ -39,7 +42,7 @@ class PlaybackService:
                 ORDER BY pr.last_played_at DESC
                 LIMIT ?
                 """,
-                (self.user_id, limit),
+                (now_ms()-PROGRESS_TTL_MS, self.user_id, limit),
             ).fetchall()
         result = []
         for row in rows:

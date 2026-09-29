@@ -377,6 +377,15 @@ def init_db(db_path: Optional[Path | str] = None) -> None:
                 conn.execute('PRAGMA user_version = 9')
                 current_version = 9
 
+            if current_version < 10:
+                from retention import migrate_retention
+                _add_column_if_missing(conn, 'tracks', 'first_seen_ms', 'INTEGER NOT NULL DEFAULT 0')
+                _add_column_if_missing(conn, 'tracks', 'last_used_ms', 'INTEGER NOT NULL DEFAULT 0')
+                _add_column_if_missing(conn, 'tracks', 'ingest_source', "TEXT NOT NULL DEFAULT 'unknown'")
+                _add_column_if_missing(conn, 'playback_progress', 'last_active_ms', 'INTEGER NOT NULL DEFAULT 0')
+                migrate_retention(conn)
+                conn.execute('PRAGMA user_version = 10')
+
             _ensure_current_schema_columns(conn)
 
         _initialized_paths.add(path)

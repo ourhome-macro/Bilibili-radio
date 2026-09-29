@@ -30,10 +30,10 @@ npm、pip 和 Rust 依赖启用缓存。Rust 构建缓存只允许 main 的 push
 测试任务分别运行在 Ubuntu 24.04 和 Windows Server 2022：
 
 - 安装固定直接版本的 Python 依赖。
-- 执行 107 项后端测试，包括字幕来源约束、缓存并发、身份与权限、会话与 CSRF、曲库、播放、推荐、下载基础行为、数据隔离、数据库迁移及续播/事件幂等性。
+- 执行 119 项后端测试，包括字幕来源约束、缓存并发、身份与权限、会话与 CSRF、曲库、播放、推荐、下载基础行为、数据隔离、数据库迁移、续播/事件幂等性及数据保留规则。
 - 执行 6 项发布版本规则测试，验证标签不匹配、Cargo 清单或锁文件未同步等情况会失败。
 - 校验 Tauri、Cargo.toml、Cargo.lock 的桌面版本一致。
-- 使用 npm ci 安装前端依赖，执行 TypeScript/Vue 类型检查、Vite 生产构建及 21 项 Vitest 播放器/组件回归。
+- 使用 npm ci 安装前端依赖，执行 TypeScript/Vue 类型检查、Vite 生产构建及 27 项 Vitest 播放器/组件回归。
 
 所有测试通过后，在 Windows Server 2022 上：
 
@@ -101,7 +101,7 @@ python scripts/run_backend_tests.py
 
 ```powershell
 py -3.12 -m unittest discover -s scripts/tests -v
-py -3.12 scripts/check_desktop_version.py --tag v0.2.0
+py -3.12 scripts/check_desktop_version.py --tag v0.2.1
 ```
 
 在 bilibili-player 目录：

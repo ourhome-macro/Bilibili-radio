@@ -7,6 +7,7 @@ from database import DEFAULT_DB_PATH, LEGACY_OWNER_USER_ID, get_connection, init
 from error_code import APIError
 from library_service import utc_now
 from models import Track
+from retention import touch_tracks
 
 
 VALID_PLAY_MODES = {"order", "loop", "single", "shuffle"}
@@ -119,6 +120,7 @@ class PlayerQueueService:
                     ),
                 )
 
+            touch_tracks(conn, [track.track_id for track in normalized], 'queue', used=False)
             conn.execute(
                 "DELETE FROM player_queue_items WHERE user_id = ?",
                 (self.user_id,),

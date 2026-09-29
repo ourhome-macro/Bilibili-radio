@@ -1,0 +1,125 @@
+{
+  "original_1853": {
+    "schema": 8,
+    "tracks": 1853,
+    "bytes": 3522560,
+    "uniqueVideos": 1634,
+    "withoutCID": 1565,
+    "withCID": 288,
+    "genericAndEpisodeSameVideo": 47,
+    "refsDistinct": {
+      "likes": 47,
+      "recent": 114,
+      "playlist_items": 7,
+      "player_queue_items": 99,
+      "track_reviews": 5,
+      "playback_sessions": 0,
+      "playback_recent": 0,
+      "playback_events": 0,
+      "analysis_events": 5
+    },
+    "personalUnion": 137,
+    "feedbackDistinct": 251,
+    "personalIncludingFeedback": 263,
+    "shownDistinct": 411,
+    "historyDistinct": 424,
+    "recommendationUnion": 454,
+    "partition": {
+      "personalOrFeedback": 263,
+      "recommendationOnly": 200,
+      "metadataOnly": 1390
+    },
+    "metadataOnlyWithoutCID": 1221,
+    "metadataOnlyWithCID": 169,
+    "shownEvents": 1842,
+    "historyRows": 611,
+    "sourceCounts": {
+      "bili": 1853
+    }
+  },
+  "pre_upgrade": {
+    "schema": 8,
+    "tracks": 1886,
+    "bytes": 3555328,
+    "uniqueVideos": 1667,
+    "withoutCID": 1598,
+    "withCID": 288,
+    "genericAndEpisodeSameVideo": 47,
+    "refsDistinct": {
+      "likes": 47,
+      "recent": 114,
+      "playlist_items": 7,
+      "player_queue_items": 99,
+      "track_reviews": 5,
+      "playback_sessions": 0,
+      "playback_recent": 0,
+      "playback_events": 0,
+      "analysis_events": 5
+    },
+    "personalUnion": 137,
+    "feedbackDistinct": 251,
+    "personalIncludingFeedback": 263,
+    "shownDistinct": 413,
+    "historyDistinct": 426,
+    "recommendationUnion": 456,
+    "partition": {
+      "personalOrFeedback": 263,
+      "recommendationOnly": 202,
+      "metadataOnly": 1421
+    },
+    "metadataOnlyWithoutCID": 1252,
+    "metadataOnlyWithCID": 169,
+    "shownEvents": 1850,
+    "historyRows": 619,
+    "sourceCounts": {
+      "bili": 1886
+    }
+  },
+  "current": {
+    "schema": 9,
+    "tracks": 1902,
+    "bytes": 3588096,
+    "uniqueVideos": 1683,
+    "withoutCID": 1614,
+    "withCID": 288,
+    "genericAndEpisodeSameVideo": 47,
+    "refsDistinct": {
+      "likes": 47,
+      "recent": 114,
+      "playlist_items": 7,
+      "player_queue_items": 99,
+      "track_reviews": 5,
+      "playback_sessions": 0,
+      "playback_recent": 0,
+      "playback_events": 0,
+      "playback_progress": 0,
+      "analysis_events": 5
+    },
+    "personalUnion": 137,
+    "feedbackDistinct": 251,
+    "personalIncludingFeedback": 263,
+    "shownDistinct": 415,
+    "historyDistinct": 428,
+    "recommendationUnion": 458,
+    "partition": {
+      "personalOrFeedback": 263,
+      "recommendationOnly": 204,
+      "metadataOnly": 1435
+    },
+    "metadataOnlyWithoutCID": 1266,
+    "metadataOnlyWithCID": 169,
+    "shownEvents": 1858,
+    "historyRows": 627,
+    "sourceCounts": {
+      "bili": 1902
+    }
+  },
+  "since_upgrade": {
+    "addedTracks": 16,
+    "removedTracks": 0,
+    "addedWithoutCID": 16,
+    "addedWithPersonalReference": 0,
+    "addedWithShownRecord": 0,
+    "newShownEvents": 8
+  }
+}
