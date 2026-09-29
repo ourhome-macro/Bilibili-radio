@@ -1,0 +1,95 @@
+{
+  "baseline": "cc76d59",
+  "environment": "Headless Edge + actual Vue/Pinia source + controlled HTTP/audio fixtures",
+  "cases": [
+    {
+      "id": "resume-existing",
+      "savedPositionMs": 45000,
+      "afterPlay": {
+        "index": 80,
+        "time": 0,
+        "status": "playing",
+        "title": "测试曲目 081"
+      },
+      "resumeRequestCount": 0
+    },
+    {
+      "id": "previous-clicks",
+      "before": {
+        "index": 80,
+        "time": 40,
+        "status": "playing",
+        "title": "测试曲目 081"
+      },
+      "firstClick": {
+        "index": 80,
+        "time": 0,
+        "status": "playing",
+        "title": "测试曲目 081"
+      },
+      "secondClick": {
+        "index": 79,
+        "time": 0,
+        "status": "loading",
+        "title": "测试曲目 080"
+      }
+    },
+    {
+      "id": "queue-locate",
+      "currentIndex": "79",
+      "scrollTop": 0,
+      "currentRowTop": 3593,
+      "viewportTop": 63,
+      "viewportBottom": 720,
+      "visible": false,
+      "currentRowExistsAfterFiltering": 0,
+      "locateButtonCount": 0
+    },
+    {
+      "id": "progress-persistence",
+      "method": "Controlled timeupdate events 0..60s on real HTMLAudioElement and unmodified store",
+      "beforeReload": {
+        "index": 0,
+        "time": 60,
+        "status": "paused",
+        "title": "测试曲目 001"
+      },
+      "historyWriteCount": 1,
+      "recordedPositionMs": 11000,
+      "afterReload": {
+        "index": 0,
+        "time": 0,
+        "status": "idle",
+        "title": "测试曲目 001"
+      },
+      "afterReplay": {
+        "index": 0,
+        "time": 0,
+        "status": "playing",
+        "title": "测试曲目 001"
+      },
+      "playbackEventRequests": 0
+    }
+  ],
+  "browserErrors": [],
+  "requestPaths": [
+    "GET /api/session/me",
+    "GET /api/auth/status",
+    "GET /api/library/recent",
+    "GET /api/library/likes",
+    "GET /api/library/playlists",
+    "GET /api/player/queue",
+    "GET /api/settings",
+    "GET /api/recommendations",
+    "GET /api/tracks/BV1Q541167Qg/1081/stream-info",
+    "GET /api/tracks/BV1Q541167Qg",
+    "GET /api/tracks/BV1Q541167Qg/1081/cover",
+    "GET /api/tracks/BV1Q541167Qg/1080/stream-info",
+    "GET /api/tracks/BV1Q541167Qg/1080/cover",
+    "PUT /api/player/queue",
+    "GET /api/tracks/BV1Q541167Qg/1001/stream-info",
+    "GET /api/tracks/BV1Q541167Qg/1001/cover",
+    "POST /api/library/recent",
+    "POST /api/recommendations/events"
+  ]
+}

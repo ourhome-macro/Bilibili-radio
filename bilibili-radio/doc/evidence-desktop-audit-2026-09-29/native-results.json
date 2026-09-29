@@ -1,0 +1,53 @@
+{
+  "environment": "Native Tauri 0.1.4 executable; isolated WebView2 profile, backend data and logs; Win32 and Windows UI Automation",
+  "baseline": "cc76d59",
+  "cases": [
+    {
+      "minimized": true,
+      "visibleStyle": true,
+      "id": "minimize-tray"
+    },
+    {
+      "moved": {
+        "x": 160,
+        "height": 112,
+        "y": 180,
+        "width": 920
+      },
+      "verified": true,
+      "id": "lyrics-hide-show-position",
+      "reopened": {
+        "x": 500,
+        "height": 112,
+        "y": 824,
+        "width": 920
+      }
+    },
+    {
+      "id": "main-close-lifecycle",
+      "processStillRunning": true,
+      "mainWindowStillExists": false
+    },
+    {
+      "initial": {
+        "x": 208,
+        "height": 859,
+        "y": 208,
+        "width": 1296
+      },
+      "id": "main-window-position",
+      "reopened": {
+        "x": 156,
+        "height": 859,
+        "y": 156,
+        "width": 1296
+      },
+      "moved": {
+        "x": 120,
+        "height": 720,
+        "y": 150,
+        "width": 1100
+      }
+    }
+  ]
+}

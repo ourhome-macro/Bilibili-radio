@@ -1,0 +1,23 @@
+{
+  "baseline": "cc76d59",
+  "environment": "Real Flask test client and SQLite in a temporary directory; no external API calls",
+  "cases": [
+    {
+      "id": "history-resume-table-mismatch",
+      "historyPostStatus": 200,
+      "historyPositionMs": 60000,
+      "resumePositionMs": 0
+    },
+    {
+      "id": "short-session-not-resumable",
+      "savedSessionPositionMs": 5000,
+      "resumePositionMs": 0
+    },
+    {
+      "id": "heartbeat-count-integration-risk",
+      "sessionCount": 1,
+      "heartbeatCount": 2,
+      "recentPlayCount": 2
+    }
+  ]
+}

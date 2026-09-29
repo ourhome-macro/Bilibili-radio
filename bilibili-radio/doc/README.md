@@ -6,6 +6,7 @@
 
 - [项目运行、构建和测试入口](../README.md)
 - [GitHub Actions CI/CD 与版本发布](github-actions-desktop-ci-cd-2026-09-29.md)
+- [桌面播放体验需求拆解、实测与源码定位](desktop-playback-tray-requirements-and-diagnosis-2026-09-29.md)：下一轮实施依据；本轮没有修复业务功能。
 - [代码签名方案参考](windows-code-signing-guide-2026-09-29.md)：当前已选择无签名发布，暂不实施本文中的签名接入。
 
 ## 桌面和播放器历史

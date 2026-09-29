@@ -77,7 +77,7 @@ npm、pip 和 Rust 依赖启用缓存。Rust 构建缓存只允许 main 的 push
 
 ## 首次启用与发布
 
-工作流文件需要先提交并推送到 GitHub，才会在云端运行。建议先合并至 main，确认分支 CI 成功，再发布版本标签。若仓库组织策略限制了 Actions 或 GITHUB_TOKEN 写权限，需要在仓库/组织设置中允许这些操作。
+工作流已随 `cc76d59` 推送到 `develop/restore-main-0828`，首次云端运行成功；尚未合并 main 或发布版本标签。建议先合并至 main，确认分支 CI 成功，再发布版本标签。若仓库组织策略限制了 Actions 或 GITHUB_TOKEN 写权限，需要在仓库/组织设置中允许这些操作。
 
 例如要发布 0.1.5，先将三个桌面版本位置一起更新为 0.1.5，提交代码，并确保当前提交已经包含工作流，然后执行：
 
@@ -125,7 +125,8 @@ py -3.12 scripts/smoke_desktop_backend.py py-radio/dist/bilibili-radio-backend.e
 - Tauri + PyInstaller + Rust + NSIS 完整构建：通过，生成 0.1.4 x64 安装包。
 - 对本次打包后端的启动、存活和数据库就绪检查：通过。
 - 使用全新 Python 3.12 环境另外完成 PyInstaller 打包和后端启动检查：通过，验证流水线所选 Python 版本可以实际打包运行。
-- Ubuntu 运行、GitHub 云端运行和真实 Release 发布：尚未执行，需要工作流推送后由 GitHub 执行。
+- [GitHub Actions 首次云端运行](https://github.com/ourhome-macro/Bilibili-radio/actions/runs/36557941317)：Windows、Ubuntu 测试与前端构建、Windows 安装包及打包后端启动检查全部通过；生成 windows-x64-installer artifact。
+- 真实 Release 发布尚未执行；首次运行由分支 push 触发，因此发布步骤按规则跳过，没有创建版本标签。
 
 本地验证安装包位于 `bilibili-player/src-tauri/target/release/bundle/nsis/Bilibili Radio_0.1.4_x64-setup.exe`，本次没有执行安装器或覆盖已安装客户端。完整本地安装包构建使用现有 Python 3.10 打包环境；Python 3.12 的后端单独在临时目录构建并验证，GitHub Windows 构建任务会在干净环境使用 Python 3.12 完成整包构建。
 
